@@ -1,0 +1,114 @@
+import React, { useState } from 'react';
+import { useAppContext } from '../contexts/AppContext';
+
+const ProductDetail = () => {
+  const { selectedProduct, formatRupiah, addToCart } = useAppContext();
+  const [quantity, setQuantity] = useState(1);
+
+  if (!selectedProduct) {
+    return (
+      <section className="page-section p-4">
+        <p>Produk tidak ditemukan.</p>
+      </section>
+    );
+  }
+
+  const { name, price, image, tags, rating, reviewCount, soldCount, description, allergens, reviews, isAvailable } = selectedProduct;
+
+  const tagsHTML = tags.map((tag) => {
+    let bgColor = tag === "New" ? "bg-blue-500" : tag === "Best Seller" ? "bg-brand-accent" : "bg-gray-400";
+    return `<span class="product-badge ${bgColor}">${tag}</span>`;
+  }).join('');
+
+  const soldText =
+    soldCount >= 1000
+      ? `${(soldCount / 1000).toFixed(1).replace(".0", "")}rb+`
+      : soldCount;
+
+  const renderStars = (rating) => {
+    let stars = "";
+    for (let i = 1; i <= 5; i++) {
+      stars += `<i class="fas fa-star ${i <= Math.round(rating) ? "text-yellow-400" : "text-gray-300"}"></i>`;
+    }
+    return stars;
+  }
+
+  const handleAddToCart = () => {
+    addToCart(selectedProduct.id, quantity);
+  }
+
+  return (
+    <section id="page-product-detail" className="page-section">
+      <img src={image} alt={name} className="w-full h-64 object-cover" />
+      <div className="p-4">
+        <div className="flex space-x-2 mb-2" dangerouslySetInnerHTML={{ __html: tagsHTML }}></div>
+        <h2 className="text-2xl font-bold text-brand-text">{name}</h2>
+        <div className="flex items-center space-x-4 my-2 text-sm text-brand-text-light">
+          <div className="flex items-center space-x-1">
+            <i className="fas fa-star text-yellow-400"></i>
+            <span className="font-bold text-brand-text">{rating.toFixed(1)}</span>
+            <span>({reviewCount} ulasan)</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <i className="fas fa-fire-alt text-orange-400"></i>
+            <span className="font-bold text-brand-text">{soldText}</span>
+            <span>terjual</span>
+          </div>
+        </div>
+        <p className="text-2xl text-brand-primary font-bold my-2">{formatRupiah(price)}</p>
+
+        <div className="mt-4 pt-4 border-t border-brand-subtle">
+          <h3 className="font-semibold text-brand-text mb-2">Deskripsi Produk</h3>
+          <p className="text-brand-text-light text-sm leading-relaxed">{description}</p>
+        </div>
+
+        {allergens && allergens.length > 0 && (
+          <div className="flex items-center text-yellow-600 mt-4 bg-yellow-100 p-3 rounded-md">
+            <i className="fas fa-exclamation-triangle text-sm mr-2"></i>
+            <span className="text-xs font-medium">Informasi Alergen: Produk ini mengandung {allergens.join(", ")}.</span>
+          </div>
+        )}
+
+        <div className="mt-6 pt-4 border-t border-brand-subtle">
+          <h3 className="font-semibold text-brand-text mb-4">Ulasan Pelanggan ({reviewCount})</h3>
+          {reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <div key={index} className="flex items-start space-x-3 mb-4">
+                <img src={`https://placehold.co/40x40/EAE0D5/3D2C1D?text=${review.name.charAt(0)}`} className="w-10 h-10 rounded-full flex-shrink-0" alt="Avatar" />
+                <div className="flex-grow">
+                  <div className="flex justify-between items-center">
+                    <p className="font-bold text-sm text-brand-text">{review.name}</p>
+                    <p className="text-xs text-brand-text-light">{review.date}</p>
+                  </div>
+                  <div className="text-xs my-1" dangerouslySetInnerHTML={{ __html: renderStars(review.rating) }}></div>
+                  <p className="text-sm text-brand-text-light">{review.text}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-brand-text-light text-center py-4 bg-brand-bg rounded-lg">Belum ada ulasan untuk produk ini.</p>
+          )}
+          {reviews.length > 0 && (
+            <button className="text-sm font-semibold text-brand-primary w-full text-center py-2 mt-2 bg-brand-bg border border-brand-subtle rounded-lg">Lihat semua ulasan</button>
+          )}
+        </div>
+      </div>
+
+      <div className="sticky bottom-[76px] bg-white p-4 border-t border-brand-subtle flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-8 h-8 bg-brand-subtle rounded-full font-bold text-lg text-brand-primary">-</button>
+          <span id="detail-quantity" className="font-semibold text-lg text-brand-text">{quantity}</span>
+          <button onClick={() => setQuantity(q => q + 1)} className="w-8 h-8 bg-brand-subtle rounded-full font-bold text-lg text-brand-primary">+</button>
+        </div>
+        <button 
+          onClick={handleAddToCart}
+          disabled={!isAvailable}
+          className={`flex-grow ml-4 text-white font-bold py-3 rounded-lg transition text-sm ${isAvailable ? 'bg-brand-accent hover:bg-opacity-90' : 'bg-gray-400 cursor-not-allowed'}`}>
+          {isAvailable ? 'Tambah ke Keranjang' : 'Stok Habis'}
+        </button>
+      </div>
+    </section>
+  );
+};
+
+export default ProductDetail;
