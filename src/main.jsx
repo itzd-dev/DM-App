@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import { AppProvider } from "./contexts/AppContext";
 // PWA registration (vite-plugin-pwa)
 import { registerSW } from "virtual:pwa-register";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
