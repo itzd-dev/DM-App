@@ -15,23 +15,20 @@ const ProductDetail = () => {
 
   const { name, price, image, tags, rating, reviewCount, soldCount, description, allergens, reviews, isAvailable } = selectedProduct;
 
-  const tagsHTML = tags.map((tag) => {
-    let bgColor = tag === "New" ? "bg-blue-500" : tag === "Best Seller" ? "bg-brand-accent" : "bg-gray-400";
-    return `<span class="product-badge ${bgColor}">${tag}</span>`;
-  }).join('');
-
   const soldText =
     soldCount >= 1000
       ? `${(soldCount / 1000).toFixed(1).replace(".0", "")}rb+`
       : soldCount;
 
-  const renderStars = (rating) => {
-    let stars = "";
+  const renderStars = (val) => {
+    const items = [];
     for (let i = 1; i <= 5; i++) {
-      stars += `<i class="fas fa-star ${i <= Math.round(rating) ? "text-yellow-400" : "text-gray-300"}"></i>`;
+      items.push(
+        <i key={i} className={`fas fa-star ${i <= Math.round(val) ? 'text-yellow-400' : 'text-gray-300'}`}></i>
+      );
     }
-    return stars;
-  }
+    return items;
+  };
 
   const handleAddToCart = () => {
     addToCart(selectedProduct.id, quantity);
@@ -41,7 +38,14 @@ const ProductDetail = () => {
     <section id="page-product-detail" className="page-section">
       <img src={image} alt={name} className="w-full h-64 object-cover" />
       <div className="p-4">
-        <div className="flex space-x-2 mb-2" dangerouslySetInnerHTML={{ __html: tagsHTML }}></div>
+        <div className="flex space-x-2 mb-2">
+          {tags.map((tag) => {
+            const bgColor = tag === 'New' ? 'bg-blue-500' : tag === 'Best Seller' ? 'bg-brand-accent' : 'bg-gray-400';
+            return (
+              <span key={tag} className={`product-badge ${bgColor}`}>{tag}</span>
+            );
+          })}
+        </div>
         <h2 className="text-2xl font-bold text-brand-text">{name}</h2>
         <div className="flex items-center space-x-4 my-2 text-sm text-brand-text-light">
           <div className="flex items-center space-x-1">
@@ -80,7 +84,7 @@ const ProductDetail = () => {
                     <p className="font-bold text-sm text-brand-text">{review.name}</p>
                     <p className="text-xs text-brand-text-light">{review.date}</p>
                   </div>
-                  <div className="text-xs my-1" dangerouslySetInnerHTML={{ __html: renderStars(review.rating) }}></div>
+                  <div className="text-xs my-1 text-yellow-400 space-x-0.5">{renderStars(review.rating)}</div>
                   <p className="text-sm text-brand-text-light">{review.text}</p>
                 </div>
               </div>

@@ -73,35 +73,35 @@ const Profile = () => {
       )}
 
       <div className="space-y-2">
-        <a href="#" className="flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+        <button type="button" className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-history mr-3 w-5 text-center text-brand-primary"></i>Riwayat Pesanan
           </span>
-          <i className="fas fa-chevron-right text-brand-text-light text-xs"></i>
-        </a>
-        <a href="#" onClick={() => navigateTo('wishlist')} className="flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+          <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
+        </button>
+        <button type="button" onClick={() => navigateTo('wishlist')} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-heart mr-3 w-5 text-center text-brand-primary"></i>Wishlist
           </span>
-          <i className="fas fa-chevron-right text-brand-text-light text-xs"></i>
-        </a>
-        <a href="#" className="flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+          <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
+        </button>
+        <button type="button" className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-map-marker-alt mr-3 w-5 text-center text-brand-primary"></i>Alamat Pengiriman
           </span>
-          <i className="fas fa-chevron-right text-brand-text-light text-xs"></i>
-        </a>
-        <a href="#" className="flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+          <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
+        </button>
+        <button type="button" className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-cog mr-3 w-5 text-center text-brand-primary"></i>Pengaturan
           </span>
-          <i className="fas fa-chevron-right text-brand-text-light text-xs"></i>
-        </a>
-        <a href="#" onClick={logout} className="flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition text-red-500 border border-brand-subtle">
+          <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
+        </button>
+        <button type="button" onClick={logout} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition text-red-500 border border-brand-subtle">
           <span className="font-medium text-sm">
-            <i className="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Keluar
+            <i className="fas fa-sign-out-alt mr-3 w-5 text-center" aria-hidden="true"></i>Keluar
           </span>
-        </a>
+        </button>
       </div>
     </section>
   );

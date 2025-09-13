@@ -4,18 +4,33 @@ import { products as initialProducts } from '../data';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  // Helpers for localStorage with safe JSON parse
+  const load = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const save = (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  };
+
   const [products, setProducts] = useState(initialProducts);
-  const [cart, setCart] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState(null); // { email: string, name: string }
+  const [cart, setCart] = useState(() => load('cart', []));
+  const [wishlist, setWishlist] = useState(() => load('wishlist', []));
+  const [isLoggedIn, setIsLoggedIn] = useState(() => load('isLoggedIn', false));
+  const [loggedInUser, setLoggedInUser] = useState(() => load('loggedInUser', null)); // { email: string, name: string }
   const [currentPage, setCurrentPage] = useState('home');
   const [pageHistory, setPageHistory] = useState(['home']);
   const [lastOrderDetails, setLastOrderDetails] = useState({});
   const [currentCategoryFilter, setCurrentCategoryFilter] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(() => load('userRole', null));
   const [adminPage, setAdminPage] = useState('dashboard');
   const [customerPoints, setCustomerPoints] = useState({
     'pengguna@email.com': 100, // Dummy points for default user
@@ -38,7 +53,7 @@ export const AppProvider = ({ children }) => {
     { code: 'HEMAT10', discount: 0.1, type: 'percentage' },
     { code: 'DISKON5K', discount: 5000, type: 'fixed' },
   ]);
-  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [appliedDiscount, setAppliedDiscount] = useState(() => load('appliedDiscount', null));
 
   const updateOrderStatus = (orderId, newStatus) => {
     setOrders(prevOrders => 
@@ -54,6 +69,14 @@ export const AppProvider = ({ children }) => {
     }, 1500); // Simulate 1.5 second loading time
     return () => clearTimeout(timer);
   }, []);
+
+  // Persist key states
+  useEffect(() => { save('cart', cart); }, [cart]);
+  useEffect(() => { save('wishlist', wishlist); }, [wishlist]);
+  useEffect(() => { save('isLoggedIn', isLoggedIn); }, [isLoggedIn]);
+  useEffect(() => { save('loggedInUser', loggedInUser); }, [loggedInUser]);
+  useEffect(() => { save('userRole', userRole); }, [userRole]);
+  useEffect(() => { save('appliedDiscount', appliedDiscount); }, [appliedDiscount]);
 
   const navigateTo = (pageId, options = {}) => {
     const { trackHistory = true, context = {} } = options;
@@ -194,6 +217,12 @@ export const AppProvider = ({ children }) => {
     setIsLoggedIn(false);
     setUserRole(null);
     setLoggedInUser(null);
+    // Clear persisted auth data
+    try {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('loggedInUser');
+    } catch {}
     navigateTo('auth');
   };
 

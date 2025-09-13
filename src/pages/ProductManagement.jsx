@@ -8,6 +8,7 @@ const ProductManagement = () => {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [stockToAdd, setStockToAdd] = useState(0);
+  const [tempObjectUrl, setTempObjectUrl] = useState(null);
 
   const openModal = (product = null) => {
     if (product) {
@@ -21,6 +22,11 @@ const ProductManagement = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setFormData({});
+    // Revoke temporary object URL to prevent memory leaks
+    if (tempObjectUrl) {
+      try { URL.revokeObjectURL(tempObjectUrl); } catch {}
+      setTempObjectUrl(null);
+    }
   };
 
   const openStockModal = (productId) => {
@@ -47,10 +53,13 @@ const ProductManagement = () => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const newImage = e.target.files[0];
-      setFormData(prev => ({ 
-        ...prev, 
-        image: URL.createObjectURL(newImage)
-      }));
+      // Revoke previous preview if any
+      if (tempObjectUrl) {
+        try { URL.revokeObjectURL(tempObjectUrl); } catch {}
+      }
+      const objUrl = URL.createObjectURL(newImage);
+      setTempObjectUrl(objUrl);
+      setFormData(prev => ({ ...prev, image: objUrl }));
     }
   };
 
