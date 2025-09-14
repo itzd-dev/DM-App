@@ -83,7 +83,7 @@ export const AppProvider = ({ children }) => {
       if (!res.ok) throw new Error('Gagal update status order');
       try {
         const saved = await res.json();
-        setOrders(prev => prev.map(o => (o.id === orderId ? saved : o)));
+        setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, ...saved } : o)));
       } catch (_) {}
       await refetchOrders();
       showToast('Status pesanan diperbarui.');
@@ -538,6 +538,8 @@ export const AppProvider = ({ children }) => {
       }
     }
 
+    const pointsUsedAmount = Number(pointsDiscount || 0);
+    const pointsRedeemed = Math.floor(pointsUsedAmount / 100);
     const newOrderBase = {
       customer: loggedInUser ? loggedInUser.name : 'Pembeli Baru', // Use loggedInUser name
       customerEmail: loggedInUser ? loggedInUser.email : 'guest@example.com', // Store email
@@ -545,6 +547,8 @@ export const AppProvider = ({ children }) => {
       total: total > 0 ? total : 0,
       status: 'Menunggu Pembayaran',
       discount: appliedDiscount,
+      pointsDiscount: pointsUsedAmount,
+      pointsRedeemed: pointsRedeemed > 0 ? pointsRedeemed : 0,
       date: new Date().toISOString().slice(0, 10), // Add current date
     };
 

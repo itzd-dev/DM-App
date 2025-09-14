@@ -108,7 +108,19 @@ const OrderHistory = () => {
                 <div className="flex justify-between items-center mb-1">
                   <div>
                     <p className="font-bold text-brand-text">{order.id}</p>
-                    <p className="text-xs text-brand-text-light">{order.date} • {order.status}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-brand-text-light">{order.date}</span>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                        order.status === 'Selesai' ? 'bg-green-100 text-green-700' :
+                        order.status === 'Dibatalkan' ? 'bg-red-100 text-red-700' :
+                        order.status === 'Dikirim' ? 'bg-blue-100 text-blue-700' :
+                        order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-700' :
+                        order.status === 'Menunggu Pembayaran' ? 'bg-gray-100 text-gray-700' :
+                        'bg-brand-bg text-brand-text-light'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
                   <p className="font-bold text-brand-primary">{formatRupiah(order.total)}</p>
                 </div>

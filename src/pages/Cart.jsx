@@ -102,9 +102,9 @@ const Cart = () => {
           {/* Loyalty Redeem in Cart */}
           <div className="mt-4 p-4 bg-brand-bg rounded-lg border border-brand-subtle">
             <h3 className="text-base font-semibold mb-2 text-brand-primary">Poin Loyalitas</h3>
-            <div className="flex justify-between mb-2">
+            <div className="flex items-center mb-2">
               <span className="text-sm text-brand-text-light">Poin Anda</span>
-              <span className="text-sm font-semibold text-brand-text">{currentPoints}</span>
+              <span className="ml-2 text-sm font-semibold text-brand-text">{currentPoints}</span>
             </div>
             <div className="flex space-x-2">
               <input
