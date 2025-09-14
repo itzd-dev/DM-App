@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "dev:vercel": "vercel dev",
     "env:ls": "vercel env ls",
     "env:add": "vercel env add",
     "env:rm": "vercel env rm",

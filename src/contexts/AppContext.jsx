@@ -57,11 +57,20 @@ export const AppProvider = ({ children }) => {
   const [appliedDiscount, setAppliedDiscount] = useState(() => load('appliedDiscount', null));
 
   const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(prevOrders => 
-      prevOrders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
-    );
+    (async () => {
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: orderId, status: newStatus }),
+        });
+        if (!res.ok) throw new Error('Gagal update status order');
+        await refetchOrders();
+      } catch (e) {
+        console.error(e);
+        setOrders(prevOrders => prevOrders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+      }
+    })();
   };
 
   useEffect(() => {
@@ -98,7 +107,7 @@ export const AppProvider = ({ children }) => {
       const resp = await fetch('/api/products');
       if (resp.ok) {
         const list = await resp.json();
-        if (Array.isArray(list) && list.length) {
+        if (Array.isArray(list)) {
           setProducts(list.map(normalizeProduct));
           return;
         }
@@ -111,7 +120,7 @@ export const AppProvider = ({ children }) => {
           .from('products')
           .select('*')
           .order('id', { ascending: false });
-        if (!error && Array.isArray(data) && data.length) {
+        if (!error && Array.isArray(data)) {
           setProducts(data.map(normalizeProduct));
         }
       } catch (_) {}
@@ -121,6 +130,8 @@ export const AppProvider = ({ children }) => {
   // Initial fetch attempt
   useEffect(() => {
     refetchProducts();
+    refetchOrders();
+    refetchPromotions();
   }, []);
 
   // Persist key states
@@ -349,6 +360,24 @@ export const AppProvider = ({ children }) => {
       }
     }
 
+    // Simpan order ke server (non-blocking)
+    (async () => {
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder),
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          setLastOrderDetails(saved);
+          await refetchOrders();
+        }
+      } catch (e) {
+        console.error('Gagal simpan order ke server:', e);
+      }
+    })();
+
     navigateTo('order-success');
   };
 
@@ -364,8 +393,14 @@ export const AppProvider = ({ children }) => {
       try {
         const today = new Date().toISOString().slice(0, 10);
         const initialStock = productData.currentStock !== undefined ? Number(productData.currentStock) : 0;
+        const priceNumber = productData.price !== undefined && productData.price !== '' ? Number(productData.price) : 0;
+        const isAvailable = productData.isAvailable !== undefined ? Boolean(productData.isAvailable) : true;
+        const featured = productData.featured !== undefined ? Boolean(productData.featured) : false;
         const payload = {
           ...productData,
+          price: priceNumber,
+          isAvailable,
+          featured,
           rating: 0,
           reviewCount: 0,
           soldCount: 0,
@@ -379,12 +414,15 @@ export const AppProvider = ({ children }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Gagal menambah produk');
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          throw new Error(errText || 'Gagal menambah produk');
+        }
         await refetchProducts();
         showToast(`${productData.name} berhasil ditambahkan.`);
       } catch (e) {
         console.error(e);
-        showToast('Gagal menambah produk.');
+        showToast('Gagal menambah produk. Cek nilai harga/stok dan API.');
       }
     })();
   };
@@ -392,17 +430,24 @@ export const AppProvider = ({ children }) => {
   const editProduct = (productId, updatedData) => {
     (async () => {
       try {
+        const priceNumber = updatedData.price !== undefined && updatedData.price !== '' ? Number(updatedData.price) : undefined;
+        const body = { id: productId, ...updatedData };
+        if (priceNumber !== undefined) body.price = priceNumber;
+        if (body.currentStock !== undefined) body.currentStock = Number(body.currentStock);
         const res = await fetch('/api/products', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: productId, ...updatedData, currentStock: Number(updatedData.currentStock) }),
+          body: JSON.stringify(body),
         });
-        if (!res.ok) throw new Error('Gagal memperbarui produk');
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          throw new Error(errText || 'Gagal memperbarui produk');
+        }
         await refetchProducts();
         showToast(`${updatedData.name} berhasil diperbarui.`);
       } catch (e) {
         console.error(e);
-        showToast('Gagal memperbarui produk.');
+        showToast('Gagal memperbarui produk. Periksa input dan API.');
       }
     })();
   };
@@ -480,13 +525,37 @@ export const AppProvider = ({ children }) => {
   };
 
   const addPromotion = (promoData) => {
-    setPromotions(prev => [...prev, promoData]);
-    showToast(`Kode promo ${promoData.code} berhasil ditambahkan.`);
+    (async () => {
+      try {
+        const res = await fetch('/api/promotions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(promoData),
+        });
+        if (!res.ok) throw new Error('Gagal menambah promo');
+        await refetchPromotions();
+        showToast(`Kode promo ${promoData.code} berhasil ditambahkan.`);
+      } catch (e) {
+        console.error(e);
+        setPromotions(prev => [...prev, promoData]);
+        showToast(`Kode promo ${promoData.code} ditambahkan (lokal).`);
+      }
+    })();
   };
 
   const deletePromotion = (promoCode) => {
-    setPromotions(prev => prev.filter(p => p.code !== promoCode));
-    showToast(`Kode promo ${promoCode} berhasil dihapus.`);
+    (async () => {
+      try {
+        const res = await fetch(`/api/promotions?code=${encodeURIComponent(promoCode)}`, { method: 'DELETE' });
+        if (res.status !== 204 && !res.ok) throw new Error('Gagal menghapus promo');
+        await refetchPromotions();
+        showToast(`Kode promo ${promoCode} berhasil dihapus.`);
+      } catch (e) {
+        console.error(e);
+        setPromotions(prev => prev.filter(p => p.code !== promoCode));
+        showToast(`Kode promo ${promoCode} dihapus (lokal).`);
+      }
+    })();
   };
 
   const applyDiscount = (code) => {
@@ -534,6 +603,27 @@ export const AppProvider = ({ children }) => {
     showToast('Laporan orderan berhasil diunduh.');
   };
 
+  // Fetch helpers
+  const refetchOrders = async () => {
+    try {
+      const resp = await fetch('/api/orders');
+      if (resp.ok) {
+        const list = await resp.json();
+        if (Array.isArray(list)) setOrders(list);
+      }
+    } catch (_) {}
+  };
+
+  const refetchPromotions = async () => {
+    try {
+      const resp = await fetch('/api/promotions');
+      if (resp.ok) {
+        const list = await resp.json();
+        if (Array.isArray(list)) setPromotions(list);
+      }
+    } catch (_) {}
+  };
+
   const value = {
     cart,
     wishlist,
@@ -578,7 +668,9 @@ export const AppProvider = ({ children }) => {
     exportOrdersToCsv,
     redeemPoints,
     showToast,
-    refetchProducts
+    refetchProducts,
+    refetchOrders,
+    refetchPromotions
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

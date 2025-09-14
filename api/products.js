@@ -17,6 +17,24 @@ const camelToSnake = (obj) => {
   return out;
 };
 
+const whitelistProductFields = (row) => {
+  // Only keep columns that exist in products table
+  const allowed = ['name','price','category','image','description','featured','tags','allergens','rating','review_count','sold_count','is_available','current_stock','stock_history'];
+  const out = {};
+  for (const key of allowed) {
+    if (row[key] !== undefined) out[key] = row[key];
+  }
+  // Coerce types
+  if (out.price !== undefined) out.price = Number(out.price) || 0;
+  if (out.rating !== undefined) out.rating = Number(out.rating) || 0;
+  if (out.review_count !== undefined) out.review_count = Number(out.review_count) || 0;
+  if (out.sold_count !== undefined) out.sold_count = Number(out.sold_count) || 0;
+  if (out.current_stock !== undefined) out.current_stock = Number(out.current_stock) || 0;
+  if (out.featured !== undefined) out.featured = Boolean(out.featured);
+  if (out.is_available !== undefined) out.is_available = Boolean(out.is_available);
+  return out;
+};
+
 module.exports = async (req, res) => {
   // CORS (atur domain di produksi)
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,7 +54,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
       const payload = req.body || {};
-      const mapped = camelToSnake(payload);
+      const mapped = whitelistProductFields(camelToSnake(payload));
       const { data, error } = await supabase
         .from('products')
         .insert(mapped)
@@ -84,7 +102,7 @@ module.exports = async (req, res) => {
       }
 
       // Update umum (mis. toggle availability, edit fields)
-      const mapped = camelToSnake(body);
+      const mapped = whitelistProductFields(camelToSnake(body));
       delete mapped.id;
       delete mapped.product_id;
       delete mapped.op;
