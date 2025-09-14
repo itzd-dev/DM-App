@@ -81,3 +81,30 @@ do $$ begin
     create policy "Allow read to anon" on public.partners for select using (true);
   end if;
 end $$;
+
+-- Loyalty Points table
+create table if not exists public.loyalty_points (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  points integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.loyalty_points enable row level security;
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'loyalty_points' and policyname = 'Loyalty: read own'
+  ) then
+    create policy "Loyalty: read own" on public.loyalty_points for select using (auth.uid() = id);
+  end if;
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'loyalty_points' and policyname = 'Loyalty: upsert own'
+  ) then
+    create policy "Loyalty: upsert own" on public.loyalty_points for insert with check (auth.uid() = id);
+  end if;
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'loyalty_points' and policyname = 'Loyalty: update own'
+  ) then
+    create policy "Loyalty: update own" on public.loyalty_points for update using (auth.uid() = id);
+  end if;
+end $$;

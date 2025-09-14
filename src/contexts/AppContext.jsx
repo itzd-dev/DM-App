@@ -60,28 +60,28 @@ export const AppProvider = ({ children }) => {
   const [appliedDiscount, setAppliedDiscount] = useState(() => load('appliedDiscount', null));
   const [userIdentities, setUserIdentities] = useState([]);
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     const prevSnapshot = orders;
     setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o)));
-    (async () => {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: orderId, status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Gagal update status order');
       try {
-        const res = await fetch('/api/orders', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: orderId, status: newStatus }),
-        });
-        if (!res.ok) throw new Error('Gagal update status order');
-        // Optionally sync with server data
-        try {
-          const saved = await res.json();
-          setOrders(prev => prev.map(o => (o.id === orderId ? saved : o)));
-        } catch (_) {}
-      } catch (e) {
-        console.error(e);
-        setOrders(prevSnapshot);
-        showToast('Gagal update status. Perubahan dibatalkan.');
-      }
-    })();
+        const saved = await res.json();
+        setOrders(prev => prev.map(o => (o.id === orderId ? saved : o)));
+      } catch (_) {}
+      await refetchOrders();
+      showToast('Status pesanan diperbarui.');
+    } catch (e) {
+      console.error(e);
+      setOrders(prevSnapshot);
+      showToast('Gagal update status. Perubahan dibatalkan.');
+      throw e;
+    }
   };
 
   useEffect(() => {
@@ -520,35 +520,21 @@ export const AppProvider = ({ children }) => {
         return product;
       })
     );
-    // Add points to customer
+    // Add points to customer via API
     if (loggedInUser && loggedInUser.email) {
       const pointsEarned = Math.floor(total / 10000); // 1 point per 10,000 IDR
-      setCustomerPoints(prev => ({
-        ...prev,
-        [loggedInUser.email]: (prev[loggedInUser.email] || 0) + pointsEarned,
-      }));
       if (pointsEarned > 0) {
-        showToast(`Anda mendapatkan ${pointsEarned} poin!`);
+        try {
+          const headers = await getAuthHeaders();
+          await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'earn', amount: pointsEarned }) });
+        } catch (_) {}
+        setCustomerPoints(prev => ({
+          ...prev,
+          [loggedInUser.email]: (prev[loggedInUser.email] || 0) + pointsEarned,
+        }));
+        showToast('Anda mendapatkan ' + pointsEarned + ' poin!');
       }
     }
-
-    // Simpan order ke server (non-blocking)
-    (async () => {
-      try {
-        const res = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newOrder),
-        });
-        if (res.ok) {
-          const saved = await res.json();
-          setLastOrderDetails(saved);
-          await refetchOrders();
-        }
-      } catch (e) {
-        console.error('Gagal simpan order ke server:', e);
-      }
-    })();
 
     // Simpan ke server dan dapatkan ID berformat DM-00001
     (async () => {
@@ -741,19 +727,28 @@ export const AppProvider = ({ children }) => {
       showToast('Silakan login untuk menukarkan poin.');
       return 0;
     }
-    const currentPoints = customerPoints[loggedInUser.email] || 0;
-    if (currentPoints < pointsToRedeem) {
-      showToast('Poin tidak cukup.');
-      return 0;
-    }
-
-    const discountValue = pointsToRedeem * 100; // Example: 1 point = Rp 100 discount
-    setCustomerPoints(prev => ({
-      ...prev,
-      [loggedInUser.email]: currentPoints - pointsToRedeem,
-    }));
-    showToast(`${pointsToRedeem} poin berhasil ditukarkan menjadi diskon ${formatRupiah(discountValue)}.`);
-    return discountValue;
+    const n = Number(pointsToRedeem) || 0;
+    if (n <= 0) return 0;
+    (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const resp = await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'redeem', amount: n }) });
+        if (!resp.ok) {
+          const msg = await resp.json().catch(() => ({}));
+          showToast(msg && msg.message ? msg.message : 'Gagal menukarkan poin');
+          return;
+        }
+        setCustomerPoints(prev => ({
+          ...prev,
+          [loggedInUser.email]: Math.max(0, (prev[loggedInUser.email] || 0) - n),
+        }));
+        const discountValue = n * 100;
+        showToast(n + ' poin berhasil ditukarkan menjadi diskon ' + formatRupiah(discountValue) + '.');
+      } catch (e) {
+        showToast('Gagal menukarkan poin');
+      }
+    })();
+    return n * 100;
   };
 
   const toggleProductAvailability = (productId) => {

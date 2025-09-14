@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Admin = () => {
-  const { logout, orders, updateOrderStatus, formatRupiah } = useAppContext();
+  const { logout, orders, updateOrderStatus, formatRupiah, refetchOrders, setAdminPage, showToast } = useAppContext();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -11,10 +11,19 @@ const Admin = () => {
     setIsModalOpen(true);
   };
 
-  const handleStatusChange = (newStatus) => {
-    updateOrderStatus(selectedOrder.id, newStatus);
-    setIsModalOpen(false);
-    setSelectedOrder(null);
+  const handleStatusChange = async (newStatus) => {
+    try {
+      await updateOrderStatus(selectedOrder.id, newStatus);
+      await refetchOrders();
+      // Force rerender this view (optional safety)
+      if (setAdminPage) setAdminPage('orders');
+      if (showToast) showToast('Status pesanan diperbarui.');
+    } catch (_) {
+      // toast already handled in context
+    } finally {
+      setIsModalOpen(false);
+      setSelectedOrder(null);
+    }
   };
 
   const getStatusClass = (status) => {
