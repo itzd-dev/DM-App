@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Admin = () => {
@@ -25,6 +25,15 @@ const Admin = () => {
       setSelectedOrder(null);
     }
   };
+
+  // Sync with API on mount and poll periodically for fresh data
+  useEffect(() => {
+    let isMounted = true;
+    const sync = async () => { try { await refetchOrders(); } catch (_) {} };
+    sync();
+    const timer = setInterval(() => { if (isMounted) sync(); }, 5000);
+    return () => { isMounted = false; clearInterval(timer); };
+  }, [refetchOrders]);
 
   const getStatusClass = (status) => {
     switch (status) {

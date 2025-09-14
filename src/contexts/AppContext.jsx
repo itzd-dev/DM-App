@@ -37,10 +37,10 @@ export const AppProvider = ({ children }) => {
     'pengguna@email.com': 100, // Dummy points for default user
     'andi@example.com': 250,
   });
-  const [customerProfiles, setCustomerProfiles] = useState({
+  const [customerProfiles, setCustomerProfiles] = useState(() => load('customerProfiles', {
     'pengguna@email.com': { favoriteProducts: [1, 3] },
     'andi@example.com': { favoriteProducts: [6, 19] },
-  });
+  }));
   const [orders, setOrders] = useState([
     { id: 'DM-12345', customer: 'Andi', total: 88000, status: 'Selesai', items: [{id: 1, name: 'Dimsum Ayam', quantity: 2, price: 18000}, {id: 9, name: 'Risol Beef Mayo', quantity: 2, price: 15000}], date: '2025-09-12' },
     { id: 'DM-12346', customer: 'Bunga', total: 45000, status: 'Selesai', items: [{id: 35, name: 'Maryam Ayam Moza BBQ', quantity: 1, price: 45000}], date: '2025-09-12' },
@@ -221,6 +221,7 @@ export const AppProvider = ({ children }) => {
   useEffect(() => { save('userRole', userRole); }, [userRole]);
   useEffect(() => { save('appliedDiscount', appliedDiscount); }, [appliedDiscount]);
   useEffect(() => { save('partners', partners); }, [partners]);
+  useEffect(() => { save('customerProfiles', customerProfiles); }, [customerProfiles]);
 
   const navigateTo = (pageId, options = {}) => {
     const { trackHistory = true, context = {} } = options;
@@ -322,7 +323,7 @@ export const AppProvider = ({ children }) => {
       setCustomerProfiles(prevProfiles => ({
         ...prevProfiles,
         [loggedInUser.email]: {
-          ...prevProfiles[loggedInUser.email],
+          ...(prevProfiles[loggedInUser.email] || {}),
           favoriteProducts: updatedWishlist,
         },
       }));
@@ -350,11 +351,37 @@ export const AppProvider = ({ children }) => {
       }
       // Load profile for the logged-in buyer
       if (!customerProfiles[email]) {
-        setCustomerProfiles(prev => ({ ...prev, [email]: { favoriteProducts: [] } }));
+        setCustomerProfiles(prev => ({ ...prev, [email]: { favoriteProducts: [], shippingAddress: null, settings: { notifyEmail: true, notifyWhatsApp: false } } }));
       }
     }
     setIsLoggedIn(true);
     navigateTo('profile');
+  };
+
+  // Update shipping address for current user
+  const saveShippingAddress = (addr) => {
+    if (!loggedInUser?.email) { showToast('Silakan login.'); return; }
+    setCustomerProfiles(prev => ({
+      ...prev,
+      [loggedInUser.email]: {
+        ...(prev[loggedInUser.email] || {}),
+        shippingAddress: addr,
+      },
+    }));
+    showToast('Alamat tersimpan.');
+  };
+
+  // Update settings for current user
+  const saveUserSettings = (settings) => {
+    if (!loggedInUser?.email) { showToast('Silakan login.'); return; }
+    setCustomerProfiles(prev => ({
+      ...prev,
+      [loggedInUser.email]: {
+        ...(prev[loggedInUser.email] || {}),
+        settings: { ...(prev[loggedInUser.email]?.settings || {}), ...settings },
+      },
+    }));
+    showToast('Pengaturan disimpan.');
   };
 
   const logout = () => {
@@ -531,6 +558,8 @@ export const AppProvider = ({ children }) => {
           try {
             const headers = await getAuthHeaders();
             await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'earn', amount: pointsEarned }) });
+            // Refresh authoritative points from server ASAP
+            try { await refetchLoyalty?.(); } catch (_) {}
           } catch (_) {}
         })();
         setCustomerPoints(prev => ({
@@ -751,6 +780,8 @@ export const AppProvider = ({ children }) => {
         setPointsDiscount((prev) => (prev || 0) + n * 100);
         const discountValue = n * 100;
         showToast(n + ' poin berhasil ditukarkan menjadi diskon ' + formatRupiah(discountValue) + '.');
+        // Refresh authoritative points from server ASAP
+        try { await refetchLoyalty?.(); } catch (_) {}
       } catch (e) {
         showToast('Gagal menukarkan poin');
       }
@@ -966,6 +997,8 @@ export const AppProvider = ({ children }) => {
     redeemPoints,
     showToast,
     loginWithGoogle,
+    saveShippingAddress,
+    saveUserSettings,
     refetchLoyalty,
     getAuthHeaders,
     signUpWithEmail,

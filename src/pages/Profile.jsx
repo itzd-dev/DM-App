@@ -65,6 +65,23 @@ const Profile = () => {
     })();
   }, []);
 
+  // Refresh on tab focus to always show authoritative points
+  useEffect(() => {
+    const onVis = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const headers = await (typeof getAuthHeaders === 'function' ? getAuthHeaders() : {});
+        const r = await fetch('/api/loyalty', { headers });
+        if (r.ok) {
+          const d = await r.json();
+          if (typeof d.points === 'number') setApiPoints(d.points);
+        }
+      } catch (_) {}
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
   return (
     <section id="page-profile" className="page-section py-4 px-8">
       <div className="text-center mb-6">
@@ -182,13 +199,13 @@ const Profile = () => {
           </span>
           <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
         </button>
-        <button type="button" className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+        <button type="button" onClick={() => navigateTo('address')} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-map-marker-alt mr-3 w-5 text-center text-brand-primary"></i>Alamat Pengiriman
           </span>
           <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
         </button>
-        <button type="button" className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+        <button type="button" onClick={() => navigateTo('settings')} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-cog mr-3 w-5 text-center text-brand-primary"></i>Pengaturan
           </span>
