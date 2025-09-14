@@ -354,6 +354,12 @@ export const AppProvider = ({ children }) => {
       setIsLoggedIn(false);
       setUserRole(null);
       setLoggedInUser(null);
+      // Bersihkan token Supabase yang tersisa di storage agar tidak auto-login
+      try {
+        Object.keys(localStorage).forEach((k) => {
+          if (k.startsWith('sb-')) localStorage.removeItem(k);
+        });
+      } catch {}
       // Clear persisted auth data
       try {
         localStorage.removeItem('isLoggedIn');
@@ -372,12 +378,26 @@ export const AppProvider = ({ children }) => {
     try {
       // Gunakan URL aplikasi (Vite) agar tidak mendarat di port vercel dev (3000)
       const redirectTo = import.meta.env.VITE_SITE_URL || window.location.origin;
-      supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+      // paksa account picker agar tidak auto-login ke akun sebelumnya
+      supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo, queryParams: { prompt: 'select_account' } },
+      });
     } catch (e) {
       console.error(e);
       showToast('Gagal membuka login Google');
     }
   };
+
+  // Bersihkan fragment token di URL setelah kembali dari OAuth
+  useEffect(() => {
+    try {
+      const h = window.location.hash || '';
+      if (h.includes('access_token=') || h.includes('refresh_token=')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } catch {}
+  }, []);
 
   // Build Authorization header with Supabase access token
   const getAuthHeaders = async () => {
