@@ -8,6 +8,22 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const requireAdmin = async (req, res) => {
+  try {
+    const auth = req.headers['authorization'] || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) return res.status(401).json({ message: 'Unauthorized' });
+    const uid = data.user.id;
+    const { data: prof } = await supabase.from('user_profiles').select('role').eq('id', uid).single();
+    if (prof?.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+    return data.user;
+  } catch (_e) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+};
+
 const camelToSnake = (obj) => {
   const out = {};
   for (const [k, v] of Object.entries(obj || {})) {
@@ -53,6 +69,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      const user = await requireAdmin(req, res); if (!user) return;
       const payload = req.body || {};
       const mapped = whitelistProductFields(camelToSnake(payload));
       const { data, error } = await supabase
@@ -65,6 +82,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT' || req.method === 'PATCH') {
+      const user = await requireAdmin(req, res); if (!user) return;
       const body = req.body || {};
       const id = body.id || body.productId || (req.query && req.query.id);
       if (!id) return res.status(400).json({ message: 'Missing id' });
@@ -117,6 +135,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
+      const user = await requireAdmin(req, res); if (!user) return;
       const id = (req.query && (req.query.id || (Array.isArray(req.query.id) ? req.query.id[0] : undefined))) || (req.body && req.body.id);
       if (!id) return res.status(400).json({ message: 'Missing id' });
       const { error } = await supabase.from('products').delete().eq('id', id);

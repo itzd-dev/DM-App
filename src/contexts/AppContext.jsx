@@ -95,6 +95,29 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (!supabase) return;
     let mounted = true;
+    const fetchAndSetRole = async (session) => {
+      try {
+        const uid = session?.user?.id;
+        if (!uid) return;
+        const { data: prof, error } = await supabase
+          .from('user_profiles')
+          .select('role,email,name')
+          .eq('id', uid)
+          .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        if (!prof) {
+          await supabase.from('user_profiles').insert({
+            id: uid,
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email,
+            role: 'buyer',
+          });
+          setUserRole('buyer');
+        } else {
+          setUserRole(prof.role || 'buyer');
+        }
+      } catch (_) {}
+    };
     const applySession = (session) => {
       if (!mounted) return;
       if (session && session.user) {
@@ -102,7 +125,7 @@ export const AppProvider = ({ children }) => {
         const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name || email || 'Pengguna';
         setIsLoggedIn(true);
         setLoggedInUser({ email, name });
-        setUserRole(email === 'admin@dapurmerifa.com' ? 'admin' : 'buyer');
+        fetchAndSetRole(session);
         setUserIdentities(session.user.identities || []);
       }
     };
@@ -356,6 +379,19 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Build Authorization header with Supabase access token
+  const getAuthHeaders = async () => {
+    const base = { 'Content-Type': 'application/json' };
+    if (!supabase) return base;
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      return token ? { ...base, Authorization: `Bearer ${token}` } : base;
+    } catch (_) {
+      return base;
+    }
+  };
+
   const signUpWithEmail = async (email, password, name) => {
     if (!supabase) {
       // fallback demo mode
@@ -550,9 +586,10 @@ export const AppProvider = ({ children }) => {
           currentStock: initialStock,
           stockHistory: [{ date: today, quantity: initialStock, type: 'initial' }],
         };
+        const headers = await getAuthHeaders();
         const res = await fetch('/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload),
         });
         if (!res.ok) {
@@ -600,9 +637,10 @@ export const AppProvider = ({ children }) => {
         const body = { id: productId, ...updatedData };
         if (body.price !== undefined && body.price !== '') body.price = Number(body.price);
         if (body.currentStock !== undefined) body.currentStock = Number(body.currentStock);
+        const headers = await getAuthHeaders();
         const res = await fetch('/api/products', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(body),
         });
         if (!res.ok) {
@@ -639,9 +677,10 @@ export const AppProvider = ({ children }) => {
     setProducts(prev => prev.map(p => (p.id === productId ? optimistic : p)));
     (async () => {
       try {
+        const headers = await getAuthHeaders();
         const res = await fetch('/api/products', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: productId, op: 'add_stock', addedQuantity: add }),
         });
         if (!res.ok) throw new Error('Gagal menambah stok');
@@ -663,7 +702,8 @@ export const AppProvider = ({ children }) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
     (async () => {
       try {
-        const res = await fetch(`/api/products?id=${productId}`, { method: 'DELETE' });
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/products?id=${productId}`, { method: 'DELETE', headers });
         if (res.status !== 204 && !res.ok) throw new Error('Gagal menghapus produk');
         showToast('Produk berhasil dihapus.');
       } catch (e) {
@@ -699,9 +739,10 @@ export const AppProvider = ({ children }) => {
     const nextVal = !(current?.isAvailable ?? true);
     (async () => {
       try {
+        const headers = await getAuthHeaders();
         const res = await fetch('/api/products', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: productId, isAvailable: nextVal }),
         });
         if (!res.ok) throw new Error('Gagal mengubah status');
@@ -719,9 +760,10 @@ export const AppProvider = ({ children }) => {
     setPromotions(prev => [...prev, promoData]);
     (async () => {
       try {
+        const headers = await getAuthHeaders();
         const res = await fetch('/api/promotions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(promoData),
         });
         if (!res.ok) throw new Error('Gagal menambah promo');
@@ -741,7 +783,8 @@ export const AppProvider = ({ children }) => {
     setPromotions(prev => prev.filter(p => p.code !== promoCode));
     (async () => {
       try {
-        const res = await fetch(`/api/promotions?code=${encodeURIComponent(promoCode)}`, { method: 'DELETE' });
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/promotions?code=${encodeURIComponent(promoCode)}`, { method: 'DELETE', headers });
         if (res.status !== 204 && !res.ok) throw new Error('Gagal menghapus promo');
         showToast(`Kode promo ${promoCode} berhasil dihapus.`);
       } catch (e) {
