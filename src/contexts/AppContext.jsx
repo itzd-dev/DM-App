@@ -130,6 +130,13 @@ export const AppProvider = ({ children }) => {
         // Arahkan ke profil setelah berhasil login (tanpa menunggu tombol)
         setCurrentPage('profile');
         setPageHistory(['profile']);
+        // Setelah sesi terpasang, hapus fragment token dari URL
+        try {
+          const h = window.location.hash || '';
+          if (h.includes('access_token=') || h.includes('refresh_token=')) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+        } catch {}
       }
     };
     supabase.auth.getSession().then(({ data }) => applySession(data?.session));
@@ -392,15 +399,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Bersihkan fragment token di URL setelah kembali dari OAuth
-  useEffect(() => {
-    try {
-      const h = window.location.hash || '';
-      if (h.includes('access_token=') || h.includes('refresh_token=')) {
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
-    } catch {}
-  }, []);
+  
 
   // Build Authorization header with Supabase access token
   const getAuthHeaders = async () => {
