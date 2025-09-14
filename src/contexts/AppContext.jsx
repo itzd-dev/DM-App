@@ -418,7 +418,14 @@ export const AppProvider = ({ children }) => {
           const errText = await res.text().catch(() => '');
           throw new Error(errText || 'Gagal menambah produk');
         }
-        await refetchProducts();
+        // Tambahkan hasil dari server langsung ke state agar tampil instan
+        try {
+          const saved = await res.json();
+          setProducts(prev => [normalizeProduct(saved), ...prev]);
+        } catch (_) {
+          // Jika parsing gagal, fallback ke refetch
+          await refetchProducts();
+        }
         showToast(`${productData.name} berhasil ditambahkan.`);
       } catch (e) {
         console.error(e);
