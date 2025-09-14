@@ -105,10 +105,14 @@ const ProductManagement = () => {
                 <div>
                   <p className="font-bold text-brand-text">{product.name}</p>
                   <p className="text-sm text-brand-text-light">{product.category} / {formatRupiah(product.price)}</p>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {product.isAvailable ? 'Tersedia' : 'Stok Habis'}
-                  </span>
-                  <p className="text-sm text-brand-text-light">Stok: {product.currentStock}</p> {/* Display currentStock */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {product.isAvailable ? 'Tersedia' : 'Stok Habis'}
+                    </span>
+                    <span className={"text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"}>
+                      Stok: {product.currentStock}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex space-x-2">

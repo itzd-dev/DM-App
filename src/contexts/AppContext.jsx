@@ -57,6 +57,8 @@ export const AppProvider = ({ children }) => {
   const [appliedDiscount, setAppliedDiscount] = useState(() => load('appliedDiscount', null));
 
   const updateOrderStatus = (orderId, newStatus) => {
+    const prevSnapshot = orders;
+    setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o)));
     (async () => {
       try {
         const res = await fetch('/api/orders', {
@@ -65,10 +67,15 @@ export const AppProvider = ({ children }) => {
           body: JSON.stringify({ id: orderId, status: newStatus }),
         });
         if (!res.ok) throw new Error('Gagal update status order');
-        await refetchOrders();
+        // Optionally sync with server data
+        try {
+          const saved = await res.json();
+          setOrders(prev => prev.map(o => (o.id === orderId ? saved : o)));
+        } catch (_) {}
       } catch (e) {
         console.error(e);
-        setOrders(prevOrders => prevOrders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+        setOrders(prevSnapshot);
+        showToast('Gagal update status. Perubahan dibatalkan.');
       }
     })();
   };
@@ -429,17 +436,35 @@ export const AppProvider = ({ children }) => {
         showToast(`${productData.name} berhasil ditambahkan.`);
       } catch (e) {
         console.error(e);
-        showToast('Gagal menambah produk. Cek nilai harga/stok dan API.');
+        // Fallback lokal: buat ID baru dengan increment dari ID terbesar saat ini
+        try {
+          const maxId = products.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0);
+          const nextId = maxId + 1;
+          const localProduct = normalizeProduct({ id: nextId, ...payload });
+          setProducts(prev => [localProduct, ...prev]);
+          showToast(`${productData.name} ditambahkan (lokal).`);
+        } catch (_) {
+          showToast('Gagal menambah produk. Cek nilai harga/stok dan API.');
+        }
       }
     })();
   };
 
   const editProduct = (productId, updatedData) => {
+    const prevSnapshot = products;
+    const current = products.find(p => p.id === productId);
+    if (!current) return;
+    const optimistic = {
+      ...current,
+      ...updatedData,
+      currentStock: updatedData.currentStock !== undefined ? Number(updatedData.currentStock) : current.currentStock,
+      price: updatedData.price !== undefined && updatedData.price !== '' ? Number(updatedData.price) : current.price,
+    };
+    setProducts(prev => prev.map(p => (p.id === productId ? optimistic : p)));
     (async () => {
       try {
-        const priceNumber = updatedData.price !== undefined && updatedData.price !== '' ? Number(updatedData.price) : undefined;
         const body = { id: productId, ...updatedData };
-        if (priceNumber !== undefined) body.price = priceNumber;
+        if (body.price !== undefined && body.price !== '') body.price = Number(body.price);
         if (body.currentStock !== undefined) body.currentStock = Number(body.currentStock);
         const res = await fetch('/api/products', {
           method: 'PUT',
@@ -450,43 +475,67 @@ export const AppProvider = ({ children }) => {
           const errText = await res.text().catch(() => '');
           throw new Error(errText || 'Gagal memperbarui produk');
         }
-        await refetchProducts();
+        try {
+          const saved = await res.json();
+          setProducts(prev => prev.map(p => (p.id === productId ? normalizeProduct(saved) : p)));
+        } catch (_) {
+          // keep optimistic if body not returned
+        }
         showToast(`${updatedData.name} berhasil diperbarui.`);
       } catch (e) {
         console.error(e);
-        showToast('Gagal memperbarui produk. Periksa input dan API.');
+        // revert
+        setProducts(prevSnapshot);
+        showToast('Gagal memperbarui produk. Perubahan dibatalkan.');
       }
     })();
   };
 
   const updateProductStock = (productId, addedQuantity) => {
+    const prevSnapshot = products;
+    const current = products.find(p => p.id === productId);
+    if (!current) return;
+    const add = Number(addedQuantity) || 0;
+    const today = new Date().toISOString().slice(0, 10);
+    const history = Array.isArray(current.stockHistory) ? [...current.stockHistory] : [];
+    const idx = history.findIndex(e => e.date === today && e.type === 'addition');
+    if (idx !== -1) history[idx] = { ...history[idx], quantity: Number(history[idx].quantity || 0) + add };
+    else history.push({ date: today, quantity: add, type: 'addition' });
+    const optimistic = { ...current, currentStock: current.currentStock + add, stockHistory: history };
+    setProducts(prev => prev.map(p => (p.id === productId ? optimistic : p)));
     (async () => {
       try {
         const res = await fetch('/api/products', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: productId, op: 'add_stock', addedQuantity: Number(addedQuantity) }),
+          body: JSON.stringify({ id: productId, op: 'add_stock', addedQuantity: add }),
         });
         if (!res.ok) throw new Error('Gagal menambah stok');
-        await refetchProducts();
+        try {
+          const saved = await res.json();
+          setProducts(prev => prev.map(p => (p.id === productId ? normalizeProduct(saved) : p)));
+        } catch (_) {}
         showToast('Stok produk diperbarui.');
       } catch (e) {
         console.error(e);
-        showToast('Gagal memperbarui stok.');
+        setProducts(prevSnapshot);
+        showToast('Gagal memperbarui stok. Perubahan dibatalkan.');
       }
     })();
   };
 
   const deleteProduct = (productId) => {
+    const prevSnapshot = products;
+    setProducts(prev => prev.filter(p => p.id !== productId));
     (async () => {
       try {
         const res = await fetch(`/api/products?id=${productId}`, { method: 'DELETE' });
         if (res.status !== 204 && !res.ok) throw new Error('Gagal menghapus produk');
-        await refetchProducts();
         showToast('Produk berhasil dihapus.');
       } catch (e) {
         console.error(e);
-        showToast('Gagal menghapus produk.');
+        setProducts(prevSnapshot);
+        showToast('Gagal menghapus produk. Perubahan dibatalkan.');
       }
     })();
   };
@@ -532,6 +581,8 @@ export const AppProvider = ({ children }) => {
   };
 
   const addPromotion = (promoData) => {
+    const prevSnapshot = promotions;
+    setPromotions(prev => [...prev, promoData]);
     (async () => {
       try {
         const res = await fetch('/api/promotions', {
@@ -540,27 +591,29 @@ export const AppProvider = ({ children }) => {
           body: JSON.stringify(promoData),
         });
         if (!res.ok) throw new Error('Gagal menambah promo');
+        // Sync list after success
         await refetchPromotions();
         showToast(`Kode promo ${promoData.code} berhasil ditambahkan.`);
       } catch (e) {
         console.error(e);
-        setPromotions(prev => [...prev, promoData]);
-        showToast(`Kode promo ${promoData.code} ditambahkan (lokal).`);
+        setPromotions(prevSnapshot);
+        showToast(`Gagal menambah promo. Perubahan dibatalkan.`);
       }
     })();
   };
 
   const deletePromotion = (promoCode) => {
+    const prevSnapshot = promotions;
+    setPromotions(prev => prev.filter(p => p.code !== promoCode));
     (async () => {
       try {
         const res = await fetch(`/api/promotions?code=${encodeURIComponent(promoCode)}`, { method: 'DELETE' });
         if (res.status !== 204 && !res.ok) throw new Error('Gagal menghapus promo');
-        await refetchPromotions();
         showToast(`Kode promo ${promoCode} berhasil dihapus.`);
       } catch (e) {
         console.error(e);
-        setPromotions(prev => prev.filter(p => p.code !== promoCode));
-        showToast(`Kode promo ${promoCode} dihapus (lokal).`);
+        setPromotions(prevSnapshot);
+        showToast(`Gagal menghapus promo. Perubahan dibatalkan.`);
       }
     })();
   };
