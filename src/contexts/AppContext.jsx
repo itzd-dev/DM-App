@@ -237,7 +237,7 @@ export const AppProvider = ({ children }) => {
     const { trackHistory = true, context = {} } = options;
     // Require login for certain pages
     if (!isLoggedIn) {
-      const guarded = ['profile', 'cart', 'wishlist', 'checkout', 'order-history', 'message-history', 'address', 'settings'];
+      const guarded = ['profile', 'cart', 'wishlist', 'checkout', 'order-history', 'address', 'settings'];
       if (guarded.includes(pageId)) pageId = 'auth';
     }
 

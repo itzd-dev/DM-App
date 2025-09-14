@@ -169,12 +169,6 @@ const Profile = () => {
 
 
       <div className="space-y-2">
-        <button type="button" onClick={() => navigateTo('message-history')} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
-          <span className="font-medium text-sm text-brand-text">
-            <i className="fas fa-envelope mr-3 w-5 text-center text-brand-primary"></i>Riwayat Pesan
-          </span>
-          <i className="fas fa-chevron-right text-brand-text-light text-xs" aria-hidden="true"></i>
-        </button>
         <button type="button" onClick={() => navigateTo('order-history')} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-history mr-3 w-5 text-center text-brand-primary"></i>Riwayat Pesanan

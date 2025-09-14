@@ -20,7 +20,6 @@ import Profile from './pages/Profile';
 import OrderHistory from './pages/OrderHistory';
 import Address from './pages/Address';
 import Settings from './pages/Settings';
-import MessageHistory from './pages/MessageHistory';
 
 // Admin Pages
 import Dashboard from './pages/Dashboard';
@@ -81,8 +80,6 @@ const App = () => {
         return <Profile />;
       case 'order-history':
         return <OrderHistory />;
-      case 'message-history':
-        return <MessageHistory />;
       case 'address':
         return <Address />;
       case 'settings':
