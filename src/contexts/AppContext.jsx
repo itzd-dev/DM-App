@@ -61,6 +61,16 @@ export const AppProvider = ({ children }) => {
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const [userIdentities, setUserIdentities] = useState([]);
 
+  // Small helper: force login before interaction
+  const ensureLoggedIn = () => {
+    if (!isLoggedIn || !loggedInUser?.email) {
+      showToast('Silakan login untuk melanjutkan.');
+      navigateTo('auth');
+      return false;
+    }
+    return true;
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
     const prevSnapshot = orders;
     setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o)));
@@ -225,9 +235,10 @@ export const AppProvider = ({ children }) => {
 
   const navigateTo = (pageId, options = {}) => {
     const { trackHistory = true, context = {} } = options;
-
-    if (pageId === 'profile' && !isLoggedIn) {
-      pageId = 'auth';
+    // Require login for certain pages
+    if (!isLoggedIn) {
+      const guarded = ['profile', 'cart', 'wishlist', 'checkout', 'order-history', 'address', 'settings'];
+      if (guarded.includes(pageId)) pageId = 'auth';
     }
 
     if (trackHistory && pageHistory[pageHistory.length - 1] !== pageId) {
@@ -273,6 +284,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const addToCart = (productId, quantity) => {
+    if (!isLoggedIn || !loggedInUser?.email) {
+      showToast('Silakan login untuk menambahkan ke keranjang.');
+      navigateTo('auth');
+      return;
+    }
     const product = products.find((p) => p.id === productId);
     setCart(prevCart => {
       const cartItem = prevCart.find((item) => item.id === productId);
@@ -288,6 +304,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateQuantity = (productId, change) => {
+    if (!isLoggedIn || !loggedInUser?.email) {
+      showToast('Silakan login untuk mengubah keranjang.');
+      navigateTo('auth');
+      return;
+    }
     setCart(prevCart => {
       const cartItem = prevCart.find((item) => item.id === productId);
       if (cartItem) {
@@ -304,6 +325,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const removeFromCart = (productId) => {
+    if (!isLoggedIn || !loggedInUser?.email) {
+      showToast('Silakan login untuk mengubah keranjang.');
+      navigateTo('auth');
+      return;
+    }
     setCart(prevCart => prevCart.filter((item) => item.id !== productId));
   };
 

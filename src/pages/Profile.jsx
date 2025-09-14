@@ -112,7 +112,7 @@ const Profile = () => {
       <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
         <h3 className="font-semibold text-brand-primary mb-2">Poin Loyalitas Anda</h3>
         <p className="text-2xl font-bold text-brand-text mb-2">{currentPoints} Poin</p>
-        <p className="text-sm text-brand-text-light">100 poin = Rp 10.000 diskon (contoh)</p>
+        <p className="text-sm text-brand-text-light">50 poin = Rp 5.000 diskon (kelipatan 50)</p>
         <div className="flex mt-3 space-x-2">
           <input 
             type="text"
@@ -122,12 +122,15 @@ const Profile = () => {
             onChange={(e) => {
               const v = e.target.value;
               if (v === '') return setPointsToRedeem('');
-              if (/^\d+$/.test(v)) {
-                let n = parseInt(v, 10) || 0;
-                n = Math.floor(n / 50) * 50; // normalisasi kelipatan 50
-                if (maxAllowed > 0 && n > maxAllowed) n = maxAllowed; // batasi maksimum
-                setPointsToRedeem(n > 0 ? String(n) : '');
-              }
+              // Izinkan ketik angka bebas terlebih dahulu; normalisasi saat blur/submit
+              if (/^\d+$/.test(v)) setPointsToRedeem(v);
+            }}
+            onBlur={() => {
+              if (pointsToRedeem === '') return;
+              let n = parseInt(pointsToRedeem, 10) || 0;
+              n = Math.floor(n / 50) * 50;
+              if (maxAllowed > 0 && n > maxAllowed) n = maxAllowed;
+              setPointsToRedeem(n > 0 ? String(n) : '');
             }}
             className="w-full px-3 py-2 border border-brand-subtle rounded-lg text-sm"
             placeholder="Jumlah poin untuk ditukar"
