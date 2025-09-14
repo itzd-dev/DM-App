@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Profile = () => {
-  const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle } = useAppContext();
+  const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle, getAuthHeaders } = useAppContext();
   const [pointsToRedeem, setPointsToRedeem] = useState('');
+  const [history, setHistory] = useState([]);
 
   const userEmail = loggedInUser?.email;
   const userName = loggedInUser?.name;
@@ -40,6 +41,20 @@ const Profile = () => {
       }
     }
   };
+
+  useEffect(() => {
+    // Fetch loyalty history
+    (async () => {
+      try {
+        const headers = await (typeof getAuthHeaders === 'function' ? getAuthHeaders() : {});
+        const resp = await fetch('/api/loyalty?history=1', { headers });
+        if (resp.ok) {
+          const data = await resp.json();
+          setHistory(Array.isArray(data.history) ? data.history : []);
+        }
+      } catch (_) {}
+    })();
+  }, []);
 
   return (
     <section id="page-profile" className="page-section py-4 px-8">
@@ -124,6 +139,21 @@ const Profile = () => {
               <div key={product.id} className="flex flex-col items-center text-center" onClick={() => navigateTo('product-detail', { context: { productId: product.id } })}>
                 <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded-md mb-1" />
                 <p className="text-[11px] font-medium text-brand-text truncate w-full">{product.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Loyalty History */}
+      {history.length > 0 && (
+        <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
+          <h3 className="font-semibold text-brand-primary mb-2">Riwayat Poin</h3>
+          <div className="space-y-2 text-sm">
+            {history.slice(0, 8).map((h, idx) => (
+              <div key={idx} className="flex justify-between">
+                <span className="text-brand-text-light">{new Date(h.created_at).toLocaleString('id-ID')} • {h.op === 'earn' ? 'Dapat' : 'Tukar'} {h.amount}</span>
+                <span className="text-brand-text">{h.points_before} → {h.points_after}</span>
               </div>
             ))}
           </div>

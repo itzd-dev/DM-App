@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Cart = () => {
-  const { cart, updateQuantity, removeFromCart, formatRupiah, navigateTo, setCurrentCategoryFilter, applyDiscount, appliedDiscount } = useAppContext();
+  const { cart, updateQuantity, removeFromCart, formatRupiah, navigateTo, setCurrentCategoryFilter, applyDiscount, appliedDiscount, pointsDiscount } = useAppContext();
   const [promoCode, setPromoCode] = useState('');
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -17,7 +17,7 @@ const Cart = () => {
     }
   }
 
-  const total = subtotal + shipping - discountAmount;
+  const total = subtotal + shipping - discountAmount - (pointsDiscount || 0);
 
   const showAllProducts = () => {
     setCurrentCategoryFilter(null);
@@ -95,6 +95,12 @@ const Cart = () => {
               <div className="flex justify-between mb-4 text-green-600">
                 <span className="font-light text-sm">Diskon ({appliedDiscount.code})</span>
                 <span className="font-medium text-sm">-{formatRupiah(discountAmount)}</span>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div className="flex justify-between mb-4 text-green-600">
+                <span className="font-light text-sm">Diskon Poin</span>
+                <span className="font-medium text-sm">-{formatRupiah(pointsDiscount)}</span>
               </div>
             )}
             <div className="border-t border-brand-subtle pt-4 flex justify-between">

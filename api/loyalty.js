@@ -53,6 +53,16 @@ export default async function handler(req, res) {
     };
 
     if (req.method === 'GET') {
+      if (String(req.query?.history || '') === '1') {
+        const { data, error } = await supabase
+          .from('loyalty_history')
+          .select('op,amount,points_before,points_after,created_at')
+          .eq('user_id', uid)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        return res.status(200).json({ history: data || [] });
+      }
       const row = await ensureRow();
       return res.status(200).json({ points: row?.points ?? 0 });
     }
@@ -85,6 +95,15 @@ export default async function handler(req, res) {
         .select('points')
         .single();
       if (e2) throw e2;
+      // Write history log
+      await supabase.from('loyalty_history').insert({
+        user_id: uid,
+        email,
+        op,
+        amount,
+        points_before: currentPts,
+        points_after: next,
+      });
       return res.status(200).json({ points: updated.points });
     }
 
@@ -93,4 +112,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: e.message || 'Unexpected error' });
   }
 }
-

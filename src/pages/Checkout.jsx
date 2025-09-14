@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Checkout = () => {
-  const { cart, formatRupiah, placeOrder, appliedDiscount } = useAppContext();
+  const { cart, formatRupiah, placeOrder, appliedDiscount, pointsDiscount } = useAppContext();
   const [paymentMethod, setPaymentMethod] = useState('qris');
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -17,7 +17,7 @@ const Checkout = () => {
     }
   }
 
-  const total = subtotal + shipping - discountAmount;
+  const total = subtotal + shipping - discountAmount - (pointsDiscount || 0);
 
   return (
     <section id="page-checkout" className="page-section p-4">
@@ -53,6 +53,12 @@ const Checkout = () => {
               <div className="flex justify-between text-green-600">
                 <span className="font-light text-sm">Diskon ({appliedDiscount.code})</span>
                 <span className="font-medium text-sm">-{formatRupiah(discountAmount)}</span>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span className="font-light text-sm">Diskon Poin</span>
+                <span className="font-medium text-sm">-{formatRupiah(pointsDiscount)}</span>
               </div>
             )}
         </div>

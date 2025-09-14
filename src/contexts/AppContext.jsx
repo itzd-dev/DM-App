@@ -58,6 +58,7 @@ export const AppProvider = ({ children }) => {
     { id: 1, name: 'Dapur Merifa', contact: '0812-xxxx-xxxx', notes: 'Owner utama' },
   ]));
   const [appliedDiscount, setAppliedDiscount] = useState(() => load('appliedDiscount', null));
+  const [pointsDiscount, setPointsDiscount] = useState(0);
   const [userIdentities, setUserIdentities] = useState([]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -571,6 +572,7 @@ export const AppProvider = ({ children }) => {
   const backToHome = () => {
     setCart([]);
     setAppliedDiscount(null);
+    setPointsDiscount(0);
     setPageHistory(['home']);
     navigateTo('home');
   };
@@ -744,6 +746,7 @@ export const AppProvider = ({ children }) => {
           ...prev,
           [loggedInUser.email]: Math.max(0, (prev[loggedInUser.email] || 0) - n),
         }));
+        setPointsDiscount((prev) => (prev || 0) + n * 100);
         const discountValue = n * 100;
         showToast(n + ' poin berhasil ditukarkan menjadi diskon ' + formatRupiah(discountValue) + '.');
       } catch (e) {
@@ -945,6 +948,7 @@ export const AppProvider = ({ children }) => {
     redeemPoints,
     showToast,
     loginWithGoogle,
+    getAuthHeaders,
     signUpWithEmail,
     signInWithEmail,
     linkGoogle,

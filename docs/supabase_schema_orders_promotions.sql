@@ -108,3 +108,24 @@ do $$ begin
     create policy "Loyalty: update own" on public.loyalty_points for update using (auth.uid() = id);
   end if;
 end $$;
+
+-- Loyalty History table (log earn/redeem)
+create table if not exists public.loyalty_history (
+  id bigserial primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  email text,
+  op text not null check (op in ('earn','redeem')),
+  amount integer not null,
+  points_before integer not null,
+  points_after integer not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.loyalty_history enable row level security;
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'loyalty_history' and policyname = 'Loyalty history: read own'
+  ) then
+    create policy "Loyalty history: read own" on public.loyalty_history for select using (auth.uid() = user_id);
+  end if;
+end $$;
