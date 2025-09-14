@@ -131,6 +131,8 @@ export const AppProvider = ({ children }) => {
         // Arahkan ke profil setelah berhasil login (tanpa menunggu tombol)
         setCurrentPage('profile');
         setPageHistory(['profile']);
+        // Sync loyalty points
+        (async () => { try { await refetchLoyalty(); } catch (_) {} })();
         // Setelah sesi terpasang, hapus fragment token dari URL
         try {
           const h = window.location.hash || '';
@@ -899,6 +901,21 @@ export const AppProvider = ({ children }) => {
     } catch (_) {}
   };
 
+  // Fetch loyalty points for the current user
+  const refetchLoyalty = async () => {
+    if (!loggedInUser?.email) return;
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch('/api/loyalty', { headers });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (typeof data.points === 'number') {
+          setCustomerPoints(prev => ({ ...prev, [loggedInUser.email]: data.points }));
+        }
+      }
+    } catch (_) {}
+  };
+
   const value = {
     cart,
     wishlist,
@@ -918,6 +935,7 @@ export const AppProvider = ({ children }) => {
     customerPoints,
     customerProfiles,
     appliedDiscount,
+    pointsDiscount,
     isLoading,
     navigateTo,
     goBack,
@@ -948,6 +966,7 @@ export const AppProvider = ({ children }) => {
     redeemPoints,
     showToast,
     loginWithGoogle,
+    refetchLoyalty,
     getAuthHeaders,
     signUpWithEmail,
     signInWithEmail,

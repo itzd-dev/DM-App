@@ -5,10 +5,11 @@ const Profile = () => {
   const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle, getAuthHeaders } = useAppContext();
   const [pointsToRedeem, setPointsToRedeem] = useState('');
   const [history, setHistory] = useState([]);
+  const [apiPoints, setApiPoints] = useState(null);
 
   const userEmail = loggedInUser?.email;
   const userName = loggedInUser?.name;
-  const currentPoints = customerPoints[userEmail] || 0;
+  const currentPoints = (apiPoints !== null ? apiPoints : (customerPoints[userEmail] || 0));
   const userProfile = customerProfiles[userEmail];
   const favoriteProducts = userProfile?.favoriteProducts?.map(id => products.find(p => p.id === id)).filter(Boolean) || [];
 
@@ -38,19 +39,27 @@ const Profile = () => {
       const discountAmount = redeemPoints(n);
       if (discountAmount > 0) {
         setPointsToRedeem('');
+        setApiPoints((prev) => (prev !== null ? Math.max(0, prev - n) : prev));
       }
     }
   };
 
   useEffect(() => {
-    // Fetch loyalty history
+    // Fetch points + history from API
     (async () => {
       try {
         const headers = await (typeof getAuthHeaders === 'function' ? getAuthHeaders() : {});
-        const resp = await fetch('/api/loyalty?history=1', { headers });
-        if (resp.ok) {
-          const data = await resp.json();
-          setHistory(Array.isArray(data.history) ? data.history : []);
+        const [r1, r2] = await Promise.all([
+          fetch('/api/loyalty', { headers }),
+          fetch('/api/loyalty?history=1', { headers })
+        ]);
+        if (r1.ok) {
+          const d1 = await r1.json();
+          if (typeof d1.points === 'number') setApiPoints(d1.points);
+        }
+        if (r2.ok) {
+          const d2 = await r2.json();
+          setHistory(Array.isArray(d2.history) ? d2.history : []);
         }
       } catch (_) {}
     })();
