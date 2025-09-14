@@ -56,6 +56,22 @@ const Header = () => {
         );
       case 'order-success':
         return <><h1 className="text-xl font-bold text-brand-primary">Pesanan Berhasil</h1><div></div></>;
+      case 'order-history':
+        return (
+          <>
+            <button onClick={goBack} className="text-brand-text"><i className="fas fa-arrow-left text-lg"></i></button>
+            <h2 className="text-lg font-semibold text-brand-primary">Riwayat Pesanan</h2>
+            <div className="w-8"></div>
+          </>
+        );
+      case 'message-history':
+        return (
+          <>
+            <button onClick={goBack} className="text-brand-text"><i className="fas fa-arrow-left text-lg"></i></button>
+            <h2 className="text-lg font-semibold text-brand-primary">Riwayat Pesan</h2>
+            <div className="w-8"></div>
+          </>
+        );
       default: // home
         return (
           <>

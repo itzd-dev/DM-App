@@ -30,10 +30,21 @@ const OrderHistory = () => {
           <h3 className="font-semibold text-brand-primary mb-2">Riwayat Poin</h3>
           <div className="space-y-2 text-sm">
             {history.map((h, idx) => (
-              <div key={idx} className="flex justify-between">
-                <span className="text-brand-text-light">{new Date(h.created_at).toLocaleString('id-ID')} • {h.op === 'earn' ? 'Dapat' : 'Tukar'} {h.amount}</span>
-                <span className="text-brand-text">{h.points_before} → {h.points_after}</span>
-              </div>
+              <details key={idx} className="group border border-brand-subtle rounded-md bg-white overflow-hidden">
+                <summary className="cursor-pointer list-none px-3 py-2 flex items-center justify-between">
+                  <span className="text-brand-text-light">
+                    {new Date(h.created_at).toLocaleString('id-ID')} • {h.op === 'earn' ? 'Dapat' : 'Tukar'} {h.amount}
+                  </span>
+                  <span className="text-brand-text font-medium">{h.points_before} → {h.points_after}</span>
+                </summary>
+                <div className="px-3 pb-3 pt-0 text-brand-text-light grid grid-cols-2 gap-y-1">
+                  <span>Operasi</span><span className="text-brand-text">{h.op === 'earn' ? 'Dapat Poin' : 'Tukar Poin'}</span>
+                  <span>Jumlah</span><span className="text-brand-text">{h.amount}</span>
+                  <span>Sebelum</span><span className="text-brand-text">{h.points_before}</span>
+                  <span>Sesudah</span><span className="text-brand-text">{h.points_after}</span>
+                  <span>Waktu</span><span className="text-brand-text">{new Date(h.created_at).toLocaleString('id-ID')}</span>
+                </div>
+              </details>
             ))}
           </div>
         </div>
@@ -66,4 +77,3 @@ const OrderHistory = () => {
 };
 
 export default OrderHistory;
-
