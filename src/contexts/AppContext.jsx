@@ -347,7 +347,8 @@ export const AppProvider = ({ children }) => {
       return;
     }
     try {
-      const redirectTo = window.location.origin;
+      // Gunakan URL aplikasi (Vite) agar tidak mendarat di port vercel dev (3000)
+      const redirectTo = import.meta.env.VITE_SITE_URL || window.location.origin;
       supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
     } catch (e) {
       console.error(e);

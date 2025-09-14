@@ -3,7 +3,7 @@ import { useAppContext } from '../contexts/AppContext';
 
 const Profile = () => {
   const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle } = useAppContext();
-  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState('');
 
   const userEmail = loggedInUser?.email;
   const userName = loggedInUser?.name;
@@ -32,12 +32,11 @@ const Profile = () => {
   }
 
   const handleRedeemPoints = () => {
-    if (pointsToRedeem > 0) {
-      const discountAmount = redeemPoints(pointsToRedeem);
+    const n = parseInt(pointsToRedeem, 10) || 0;
+    if (n > 0) {
+      const discountAmount = redeemPoints(n);
       if (discountAmount > 0) {
-        // Optionally, apply this discount to a temporary cart or show a message
-        // For now, redeemPoints already shows a toast.
-        setPointsToRedeem(0);
+        setPointsToRedeem('');
       }
     }
   };
@@ -65,11 +64,18 @@ const Profile = () => {
         <p className="text-sm text-brand-text-light">100 poin = Rp 10.000 diskon (contoh)</p>
         <div className="flex mt-3 space-x-2">
           <input 
-            type="number" 
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={pointsToRedeem}
-            onChange={(e) => setPointsToRedeem(Math.max(0, parseInt(e.target.value) || 0))}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === '') return setPointsToRedeem('');
+              if (/^\d+$/.test(v)) setPointsToRedeem(v);
+            }}
             className="w-full px-3 py-2 border border-brand-subtle rounded-lg text-sm"
             placeholder="Jumlah poin untuk ditukar"
+            aria-label="Jumlah poin untuk ditukar"
           />
           <button onClick={handleRedeemPoints} className="bg-brand-accent text-white font-bold py-2 px-4 rounded-lg text-sm">
             Tukar
@@ -92,17 +98,21 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Account & Security */}
+      {/* Account */}
       <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
-        <h3 className="font-semibold text-brand-primary mb-2">Akun & Keamanan</h3>
-        <p className="text-sm text-brand-text-light mb-2">Email: <span className="text-brand-text font-medium">{userEmail || '-'}</span></p>
-        {Array.isArray(userIdentities) && userIdentities.some(id => id.provider === 'google') ? (
-          <p className="text-xs text-green-700 bg-green-100 inline-block px-2 py-0.5 rounded">Terhubung ke Google</p>
-        ) : (
-          <button onClick={linkGoogle} className="text-xs bg-white border border-brand-subtle px-3 py-1 rounded hover:bg-brand-bg">
-            Hubungkan Google
-          </button>
-        )}
+        <h3 className="font-semibold text-brand-primary mb-3">Akun</h3>
+        <div className="flex items-center justify-between mb-2 text-sm">
+          <span className="text-brand-text-light">Email</span>
+          <span className="text-brand-text font-medium">{userEmail || '-'}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-brand-text-light">Koneksi</span>
+          {Array.isArray(userIdentities) && userIdentities.some(id => id.provider === 'google') ? (
+            <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">Google</span>
+          ) : (
+            <button onClick={linkGoogle} className="text-xs bg-white border border-brand-subtle px-3 py-1 rounded hover:bg-brand-bg">Hubungkan Google</button>
+          )}
+        </div>
       </div>
 
       {/* Recommendations Section */}
