@@ -524,10 +524,12 @@ export const AppProvider = ({ children }) => {
     if (loggedInUser && loggedInUser.email) {
       const pointsEarned = Math.floor(total / 10000); // 1 point per 10,000 IDR
       if (pointsEarned > 0) {
-        try {
-          const headers = await getAuthHeaders();
-          await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'earn', amount: pointsEarned }) });
-        } catch (_) {}
+        (async () => {
+          try {
+            const headers = await getAuthHeaders();
+            await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'earn', amount: pointsEarned }) });
+          } catch (_) {}
+        })();
         setCustomerPoints(prev => ({
           ...prev,
           [loggedInUser.email]: (prev[loggedInUser.email] || 0) + pointsEarned,
