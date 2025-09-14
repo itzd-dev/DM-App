@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Cart = () => {
-  const { cart, updateQuantity, removeFromCart, formatRupiah, navigateTo, setCurrentCategoryFilter, applyDiscount, appliedDiscount, pointsDiscount, resetPointsDiscount } = useAppContext();
+  const { cart, updateQuantity, removeFromCart, formatRupiah, navigateTo, setCurrentCategoryFilter, applyDiscount, appliedDiscount, pointsDiscount, resetPointsDiscount, loggedInUser, customerPoints, redeemPoints, getAuthHeaders } = useAppContext();
   const [promoCode, setPromoCode] = useState('');
+  const [pointsToRedeem, setPointsToRedeem] = useState('');
+  const [apiPoints, setApiPoints] = useState(null);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = 10000;
@@ -18,6 +20,22 @@ const Cart = () => {
   }
 
   const total = subtotal + shipping - discountAmount - (pointsDiscount || 0);
+
+  // fetch current points when cart mounts
+  useEffect(() => {
+    (async () => {
+      try {
+        const headers = await (typeof getAuthHeaders === 'function' ? getAuthHeaders() : {});
+        const r = await fetch('/api/loyalty', { headers });
+        if (r.ok) {
+          const d = await r.json();
+          if (typeof d.points === 'number') setApiPoints(d.points);
+        }
+      } catch (_) {}
+    })();
+  }, []);
+
+  const currentPoints = apiPoints !== null ? apiPoints : (loggedInUser?.email ? (customerPoints[loggedInUser.email] || 0) : 0);
 
   const showAllProducts = () => {
     setCurrentCategoryFilter(null);
@@ -79,6 +97,38 @@ const Cart = () => {
               />
               <button onClick={handleApplyCode} className="bg-brand-primary text-white font-semibold px-4 rounded-lg text-sm">Terapkan</button>
             </div>
+          </div>
+
+          {/* Loyalty Redeem in Cart */}
+          <div className="mt-4 p-4 bg-brand-bg rounded-lg border border-brand-subtle">
+            <h3 className="text-base font-semibold mb-2 text-brand-primary">Poin Loyalitas</h3>
+            <div className="flex justify-between mb-2">
+              <span className="text-sm text-brand-text-light">Poin Anda</span>
+              <span className="text-sm font-semibold text-brand-text">{currentPoints}</span>
+            </div>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={pointsToRedeem}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === '') return setPointsToRedeem('');
+                  if (/^\d+$/.test(v)) setPointsToRedeem(v);
+                }}
+                onBlur={() => {
+                  if (pointsToRedeem === '') return;
+                  let n = parseInt(pointsToRedeem, 10) || 0;
+                  n = Math.floor(n / 50) * 50;
+                  setPointsToRedeem(n > 0 ? String(n) : '');
+                }}
+                placeholder="Masukkan poin (kelipatan 50)"
+                className="w-full px-4 py-2 border-2 border-brand-subtle rounded-lg text-sm"
+              />
+              <button onClick={() => { const d = redeemPoints(parseInt(pointsToRedeem||'0',10)); if (d>0) setPointsToRedeem(''); }} className="bg-brand-primary text-white font-semibold px-4 rounded-lg text-sm">Tukar</button>
+            </div>
+            <p className="text-xs text-brand-text-light mt-1">50 poin = Rp 5.000, kelipatan 50</p>
           </div>
 
           <div id="cart-summary" className="mt-4 p-4 bg-brand-bg rounded-lg border border-brand-subtle">

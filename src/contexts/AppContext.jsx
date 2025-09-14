@@ -789,7 +789,23 @@ export const AppProvider = ({ children }) => {
       return 0;
     }
     const step = 50;
-    const balance = customerPoints[loggedInUser.email] || 0;
+    // Ambil saldo poin terbaru: jika 0/tidak ada, coba fetch dari API dulu
+    let balance = customerPoints[loggedInUser.email] || 0;
+    const ensureBalance = async () => {
+      if (balance > 0) return balance;
+      try {
+        const headers = await getAuthHeaders();
+        const r = await fetch('/api/loyalty', { headers });
+        if (r.ok) {
+          const d = await r.json();
+          if (typeof d.points === 'number') {
+            balance = d.points;
+            setCustomerPoints(prev => ({ ...prev, [loggedInUser.email]: d.points }));
+          }
+        }
+      } catch (_) {}
+      return balance;
+    };
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     let discountAmount = 0;
     if (appliedDiscount) {
@@ -797,31 +813,36 @@ export const AppProvider = ({ children }) => {
     }
     const remainingCurrencyCap = Math.max(0, subtotal - discountAmount - (pointsDiscount || 0));
     const maxBySubtotalPoints = Math.floor(remainingCurrencyCap / 100);
-    const hardCap = Math.min(balance, maxBySubtotalPoints);
-    let n = Math.floor(((Number(pointsToRedeem) || 0)) / step) * step;
-    if (n < step) {
-      showToast('Minimal penukaran 50 poin dan kelipatannya.');
-      return 0;
-    }
-    const capped = Math.floor(hardCap / step) * step;
-    if (capped <= 0) {
-      if (subtotal <= 0) showToast('Keranjang kosong atau total belanja 0.');
-      else if (balance <= 0) showToast('Poin tidak cukup.');
-      else showToast('Melebihi nilai belanja yang bisa didiskon.');
-      return 0;
-    }
-    if (n > capped) {
-      n = capped;
-      showToast(`Maksimal yang dapat ditukar: ${n} poin.`);
-    }
-    (async () => {
+    // hardCap dihitung setelah memastikan saldo terbaru
+    // fungsi utama dijalankan di dalam IIFE async agar bisa await ensureBalance
+    (async () => {})();
+    // placeholder return; logika di bawah akan di-override oleh implementasi IIFE
+    const run = async () => {
+      await ensureBalance();
+      const hardCap = Math.min(balance, maxBySubtotalPoints);
+      let n = Math.floor(((Number(pointsToRedeem) || 0)) / step) * step;
+      if (n < step) {
+        showToast('Minimal penukaran 50 poin dan kelipatannya.');
+        return 0;
+      }
+      const capped = Math.floor(hardCap / step) * step;
+      if (capped <= 0) {
+        if (subtotal <= 0) showToast('Keranjang kosong atau total belanja 0.');
+        else if (balance <= 0) showToast('Poin tidak cukup.');
+        else showToast('Melebihi nilai belanja yang bisa didiskon.');
+        return 0;
+      }
+      if (n > capped) {
+        n = capped;
+        showToast(`Maksimal yang dapat ditukar: ${n} poin.`);
+      }
       try {
         const headers = await getAuthHeaders();
         const resp = await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'redeem', amount: n }) });
         if (!resp.ok) {
           const msg = await resp.json().catch(() => ({}));
           showToast(msg && msg.message ? msg.message : 'Gagal menukarkan poin');
-          return;
+          return 0;
         }
         setCustomerPoints(prev => ({
           ...prev,
@@ -830,13 +851,19 @@ export const AppProvider = ({ children }) => {
         setPointsDiscount((prev) => (prev || 0) + n * 100);
         const discountValue = n * 100;
         showToast(n + ' poin berhasil ditukarkan menjadi diskon ' + formatRupiah(discountValue) + '.');
-        // Refresh authoritative points from server ASAP
         try { await refetchLoyalty?.(); } catch (_) {}
+        return discountValue;
       } catch (e) {
         showToast('Gagal menukarkan poin');
+        return 0;
       }
-    })();
-    return n * 100;
+    };
+    // jalankan dan kembalikan nilai estimasi agar UI cepat, nilai server tetap sinkron via toast/refetch
+    run();
+    // Estimasi diskon langsung (optimistik)
+    let est = Math.floor(((Number(pointsToRedeem) || 0)) / step) * step;
+    if (est < step) est = 0;
+    return est * 100;
   };
 
   const resetPointsDiscount = () => {
