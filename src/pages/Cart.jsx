@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Cart = () => {
-  const { cart, updateQuantity, removeFromCart, formatRupiah, navigateTo, setCurrentCategoryFilter, applyDiscount, appliedDiscount, pointsDiscount } = useAppContext();
+  const { cart, updateQuantity, removeFromCart, formatRupiah, navigateTo, setCurrentCategoryFilter, applyDiscount, appliedDiscount, pointsDiscount, resetPointsDiscount } = useAppContext();
   const [promoCode, setPromoCode] = useState('');
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -107,6 +107,11 @@ const Cart = () => {
               <span className="text-base font-semibold text-brand-text">Total</span>
               <span className="font-bold text-lg text-brand-primary">{formatRupiah(total > 0 ? total : 0)}</span>
             </div>
+            {pointsDiscount > 0 && (
+              <button onClick={resetPointsDiscount} className="w-full mt-3 bg-white border border-brand-subtle text-brand-text font-medium py-2 rounded-lg text-xs">
+                Reset Diskon Poin
+              </button>
+            )}
             <button onClick={() => navigateTo('checkout')} className="w-full mt-4 bg-brand-accent text-white font-bold py-2.5 rounded-lg hover:bg-opacity-90 transition text-sm">
               Lanjutkan ke Pembayaran
             </button>

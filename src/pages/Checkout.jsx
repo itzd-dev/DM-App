@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Checkout = () => {
-  const { cart, formatRupiah, placeOrder, appliedDiscount, pointsDiscount } = useAppContext();
+  const { cart, formatRupiah, placeOrder, appliedDiscount, pointsDiscount, resetPointsDiscount } = useAppContext();
   const [paymentMethod, setPaymentMethod] = useState('qris');
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -104,6 +104,11 @@ const Checkout = () => {
             <span className="font-bold text-xl text-brand-primary">{formatRupiah(total > 0 ? total : 0)}</span>
          </div>
         <div className="px-4">
+          {pointsDiscount > 0 && (
+            <button onClick={resetPointsDiscount} className="w-full mb-2 bg-white border border-brand-subtle text-brand-text font-medium py-2 rounded-lg text-xs">
+              Reset Diskon Poin
+            </button>
+          )}
           <button onClick={placeOrder} className="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition text-sm">
               Selesaikan Pesanan
           </button>

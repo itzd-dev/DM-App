@@ -762,8 +762,30 @@ export const AppProvider = ({ children }) => {
       showToast('Silakan login untuk menukarkan poin.');
       return 0;
     }
-    const n = Number(pointsToRedeem) || 0;
-    if (n <= 0) return 0;
+    const step = 50;
+    const balance = customerPoints[loggedInUser.email] || 0;
+    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    let discountAmount = 0;
+    if (appliedDiscount) {
+      discountAmount = appliedDiscount.type === 'percentage' ? subtotal * appliedDiscount.discount : appliedDiscount.discount;
+    }
+    const remainingCurrencyCap = Math.max(0, subtotal - discountAmount - (pointsDiscount || 0));
+    const maxBySubtotalPoints = Math.floor(remainingCurrencyCap / 100);
+    const hardCap = Math.min(balance, maxBySubtotalPoints);
+    let n = Math.floor(((Number(pointsToRedeem) || 0)) / step) * step;
+    if (n < step) {
+      showToast('Minimal penukaran 50 poin dan kelipatannya.');
+      return 0;
+    }
+    const capped = Math.floor(hardCap / step) * step;
+    if (capped <= 0) {
+      showToast('Poin tidak cukup atau melebihi subtotal.');
+      return 0;
+    }
+    if (n > capped) {
+      n = capped;
+      showToast(`Maksimal yang dapat ditukar: ${n} poin.`);
+    }
     (async () => {
       try {
         const headers = await getAuthHeaders();
@@ -787,6 +809,33 @@ export const AppProvider = ({ children }) => {
       }
     })();
     return n * 100;
+  };
+
+  const resetPointsDiscount = () => {
+    if (pointsDiscount > 0 && loggedInUser?.email) {
+      const pointsToRefund = Math.floor((pointsDiscount || 0) / 100);
+      (async () => {
+        try {
+          const headers = await getAuthHeaders();
+          // Kembalikan poin ke saldo pengguna (refund)
+          if (pointsToRefund > 0) {
+            await fetch('/api/loyalty', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ op: 'earn', amount: pointsToRefund })
+            });
+            // Update cache lokal cepat
+            setCustomerPoints(prev => ({
+              ...prev,
+              [loggedInUser.email]: (prev[loggedInUser.email] || 0) + pointsToRefund,
+            }));
+            try { await refetchLoyalty?.(); } catch (_) {}
+          }
+        } catch (_) {}
+      })();
+    }
+    setPointsDiscount(0);
+    showToast('Diskon poin dibatalkan & poin dikembalikan.');
   };
 
   const toggleProductAvailability = (productId) => {
@@ -995,6 +1044,7 @@ export const AppProvider = ({ children }) => {
     applyDiscount,
     exportOrdersToCsv,
     redeemPoints,
+    resetPointsDiscount,
     showToast,
     loginWithGoogle,
     saveShippingAddress,
