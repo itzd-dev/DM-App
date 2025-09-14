@@ -98,8 +98,8 @@ const ProductManagement = () => {
       <div className="bg-white rounded-lg shadow-md p-4">
         <div className="space-y-3">
           {products.map((product, index) => (
-            <div key={product.id} className="border border-brand-subtle rounded-lg p-3 flex justify-between items-center">
-              <div className="flex items-center space-x-4">
+            <div key={product.id} className="border border-brand-subtle rounded-lg p-3 md:flex md:justify-between md:items-center">
+              <div className="flex items-center space-x-3">
                 <span className="font-bold text-brand-text text-lg w-12 text-center">{product.id}.</span>
                 <img src={product.image} alt={product.name} className="w-16 h-16 rounded-md object-cover" />
                 <div>
@@ -118,13 +118,24 @@ const ProductManagement = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex space-x-2">
+              {/* Actions desktop */}
+              <div className="hidden md:flex space-x-2">
                 <button onClick={() => openModal(product)} className="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs">Edit</button>
-                <button onClick={() => openStockModal(product.id)} className="bg-purple-500 text-white px-3 py-1 rounded-lg text-xs">Tambah Stok</button> {/* Open stock modal */}
+                <button onClick={() => openStockModal(product.id)} className="bg-purple-500 text-white px-3 py-1 rounded-lg text-xs">Tambah Stok</button>
                 <button onClick={() => toggleProductAvailability(product.id)} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white px-3 py-1 rounded-lg text-xs`}>
                   {product.isAvailable ? 'Stok Habis' : 'Tersedia'}
                 </button>
                 <button onClick={() => handleDelete(product.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs">Hapus</button>
+              </div>
+
+              {/* Actions mobile (below card) */}
+              <div className="grid grid-cols-2 gap-2 mt-3 md:hidden">
+                <button onClick={() => openModal(product)} className="bg-blue-500 text-white h-9 rounded-lg text-xs">Edit</button>
+                <button onClick={() => openStockModal(product.id)} className="bg-purple-500 text-white h-9 rounded-lg text-xs">Tambah Stok</button>
+                <button onClick={() => toggleProductAvailability(product.id)} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white h-9 rounded-lg text-xs`}>
+                  {product.isAvailable ? 'Stok Habis' : 'Tersedia'}
+                </button>
+                <button onClick={() => handleDelete(product.id)} className="bg-red-500 text-white h-9 rounded-lg text-xs">Hapus</button>
               </div>
             </div>
           ))}
