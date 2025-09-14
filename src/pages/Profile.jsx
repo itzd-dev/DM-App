@@ -187,23 +187,9 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Loyalty History */}
-      {history.length > 0 && (
-        <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
-          <h3 className="font-semibold text-brand-primary mb-2">Riwayat Poin</h3>
-          <div className="space-y-2 text-sm">
-            {history.slice(0, 8).map((h, idx) => (
-              <div key={idx} className="flex justify-between">
-                <span className="text-brand-text-light">{new Date(h.created_at).toLocaleString('id-ID')} • {h.op === 'earn' ? 'Dapat' : 'Tukar'} {h.amount}</span>
-                <span className="text-brand-text">{h.points_before} → {h.points_after}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="space-y-2">
-        <button type="button" className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
+        <button type="button" onClick={() => navigateTo('order-history')} className="w-full text-left flex justify-between items-center p-4 bg-brand-bg rounded-lg hover:bg-brand-subtle transition border border-brand-subtle">
           <span className="font-medium text-sm text-brand-text">
             <i className="fas fa-history mr-3 w-5 text-center text-brand-primary"></i>Riwayat Pesanan
           </span>

@@ -17,6 +17,7 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Auth from './pages/Auth';
 import Profile from './pages/Profile';
+import OrderHistory from './pages/OrderHistory';
 import Address from './pages/Address';
 import Settings from './pages/Settings';
 
@@ -77,6 +78,8 @@ const App = () => {
         return <Auth />;
       case 'profile':
         return <Profile />;
+      case 'order-history':
+        return <OrderHistory />;
       case 'address':
         return <Address />;
       case 'settings':
