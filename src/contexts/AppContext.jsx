@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { products as initialProducts } from '../data';
+import { supabase } from '../lib/supabaseClient';
 
 const AppContext = createContext();
 
@@ -68,6 +69,58 @@ export const AppProvider = ({ children }) => {
       setIsLoading(false);
     }, 1500); // Simulate 1.5 second loading time
     return () => clearTimeout(timer);
+  }, []);
+
+  // Normalize products coming from Supabase to match local shape
+  const normalizeProduct = (p) => ({
+    id: p.id,
+    name: p.name ?? '',
+    price: Number(p.price ?? 0),
+    category: p.category ?? '',
+    image: p.image ?? 'https://placehold.co/400x400/EAE0D5/3D2C1D?text=Produk',
+    description: p.description ?? '',
+    featured: Boolean(p.featured ?? false),
+    tags: Array.isArray(p.tags) ? p.tags : [],
+    allergens: Array.isArray(p.allergens) ? p.allergens : [],
+    rating: Number(p.rating ?? 0),
+    reviewCount: Number(p.reviewCount ?? p.review_count ?? 0),
+    soldCount: Number(p.soldCount ?? p.sold_count ?? 0),
+    reviews: Array.isArray(p.reviews) ? p.reviews : [],
+    isAvailable: p.isAvailable ?? p.is_available ?? true,
+    currentStock: Number(p.currentStock ?? p.current_stock ?? 0),
+    stockHistory: Array.isArray(p.stockHistory) ? p.stockHistory : (p.stock_history ?? []),
+  });
+
+  // Helper: refetch products from API or Supabase
+  const refetchProducts = async () => {
+    try {
+      // Prefer serverless API
+      const resp = await fetch('/api/products');
+      if (resp.ok) {
+        const list = await resp.json();
+        if (Array.isArray(list) && list.length) {
+          setProducts(list.map(normalizeProduct));
+          return;
+        }
+      }
+    } catch (_) {}
+    // Fallback: direct supabase fetch
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('id', { ascending: false });
+        if (!error && Array.isArray(data) && data.length) {
+          setProducts(data.map(normalizeProduct));
+        }
+      } catch (_) {}
+    }
+  };
+
+  // Initial fetch attempt
+  useEffect(() => {
+    refetchProducts();
   }, []);
 
   // Persist key states
@@ -307,69 +360,83 @@ export const AppProvider = ({ children }) => {
   };
 
   const addProduct = (productData) => {
-    const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-    const today = new Date().toISOString().slice(0, 10);
-    const initialStock = productData.currentStock !== undefined ? Number(productData.currentStock) : 0;
-    const newProduct = {
-      ...productData,
-      id: newId,
-      rating: 0,
-      reviewCount: 0,
-      soldCount: 0,
-      reviews: [],
-      tags: ["New"],
-      currentStock: initialStock,
-      stockHistory: [{ date: today, quantity: initialStock, type: 'initial' }],
-    };
-    setProducts(prevProducts => [newProduct, ...prevProducts]);
-    showToast(`${productData.name} berhasil ditambahkan.`);
+    (async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const initialStock = productData.currentStock !== undefined ? Number(productData.currentStock) : 0;
+        const payload = {
+          ...productData,
+          rating: 0,
+          reviewCount: 0,
+          soldCount: 0,
+          reviews: [],
+          tags: productData.tags && productData.tags.length ? productData.tags : ["New"],
+          currentStock: initialStock,
+          stockHistory: [{ date: today, quantity: initialStock, type: 'initial' }],
+        };
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('Gagal menambah produk');
+        await refetchProducts();
+        showToast(`${productData.name} berhasil ditambahkan.`);
+      } catch (e) {
+        console.error(e);
+        showToast('Gagal menambah produk.');
+      }
+    })();
   };
 
   const editProduct = (productId, updatedData) => {
-    setProducts(prevProducts => 
-      prevProducts.map(p => 
-        p.id === productId ? { ...p, ...updatedData, currentStock: Number(updatedData.currentStock) } : p
-      )
-    );
-    showToast(`${updatedData.name} berhasil diperbarui.`);
+    (async () => {
+      try {
+        const res = await fetch('/api/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: productId, ...updatedData, currentStock: Number(updatedData.currentStock) }),
+        });
+        if (!res.ok) throw new Error('Gagal memperbarui produk');
+        await refetchProducts();
+        showToast(`${updatedData.name} berhasil diperbarui.`);
+      } catch (e) {
+        console.error(e);
+        showToast('Gagal memperbarui produk.');
+      }
+    })();
   };
 
   const updateProductStock = (productId, addedQuantity) => {
-    setProducts(prevProducts =>
-      prevProducts.map(product => {
-        if (product.id === productId) {
-          const newStock = product.currentStock + Number(addedQuantity);
-          const today = new Date().toISOString().slice(0, 10);
-          const updatedStockHistory = [...product.stockHistory];
-
-          // Check if there's an existing 'addition' entry for today
-          const existingEntryIndex = updatedStockHistory.findIndex(entry => entry.date === today && entry.type === 'addition');
-
-          if (existingEntryIndex !== -1) {
-            // Update existing entry
-            updatedStockHistory[existingEntryIndex].quantity += Number(addedQuantity);
-          } else {
-            // Add new entry
-            updatedStockHistory.push({ date: today, quantity: Number(addedQuantity), type: 'addition' });
-          }
-
-          return {
-            ...product,
-            currentStock: newStock,
-            stockHistory: updatedStockHistory,
-          };
-        }
-        return product;
-      })
-    );
-    showToast(`Stok produk diperbarui.`);
+    (async () => {
+      try {
+        const res = await fetch('/api/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: productId, op: 'add_stock', addedQuantity: Number(addedQuantity) }),
+        });
+        if (!res.ok) throw new Error('Gagal menambah stok');
+        await refetchProducts();
+        showToast('Stok produk diperbarui.');
+      } catch (e) {
+        console.error(e);
+        showToast('Gagal memperbarui stok.');
+      }
+    })();
   };
 
   const deleteProduct = (productId) => {
-    setProducts(prevProducts => 
-      prevProducts.filter(p => p.id !== productId)
-    );
-    showToast('Produk berhasil dihapus.');
+    (async () => {
+      try {
+        const res = await fetch(`/api/products?id=${productId}`, { method: 'DELETE' });
+        if (res.status !== 204 && !res.ok) throw new Error('Gagal menghapus produk');
+        await refetchProducts();
+        showToast('Produk berhasil dihapus.');
+      } catch (e) {
+        console.error(e);
+        showToast('Gagal menghapus produk.');
+      }
+    })();
   };
 
   const redeemPoints = (pointsToRedeem) => {
@@ -393,12 +460,23 @@ export const AppProvider = ({ children }) => {
   };
 
   const toggleProductAvailability = (productId) => {
-    setProducts(prevProducts => 
-      prevProducts.map(p => 
-        p.id === productId ? { ...p, isAvailable: !p.isAvailable } : p
-      )
-    );
-    showToast('Status ketersediaan produk diperbarui.');
+    const current = products.find(p => p.id === productId);
+    const nextVal = !(current?.isAvailable ?? true);
+    (async () => {
+      try {
+        const res = await fetch('/api/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: productId, isAvailable: nextVal }),
+        });
+        if (!res.ok) throw new Error('Gagal mengubah status');
+        await refetchProducts();
+        showToast('Status ketersediaan produk diperbarui.');
+      } catch (e) {
+        console.error(e);
+        showToast('Gagal memperbarui status produk.');
+      }
+    })();
   };
 
   const addPromotion = (promoData) => {
@@ -499,7 +577,8 @@ export const AppProvider = ({ children }) => {
     applyDiscount,
     exportOrdersToCsv,
     redeemPoints,
-    showToast
+    showToast,
+    refetchProducts
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

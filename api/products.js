@@ -1,36 +1,113 @@
 // dapurmerifa/api/products.js
+// Serverless API untuk CRUD produk via Supabase (server-side, aman untuk write)
 
-// Ini adalah contoh serverless function untuk Vercel.
-// Anda akan mengembangkan ini lebih lanjut untuk berinteraksi dengan database Anda (misalnya Supabase).
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+const camelToSnake = (obj) => {
+  const out = {};
+  for (const [k, v] of Object.entries(obj || {})) {
+    const snake = k.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
+    out[snake] = v;
+  }
+  return out;
+};
 
 module.exports = async (req, res) => {
-  // Mengizinkan semua origin untuk pengembangan.
-  // Di produksi, Anda harus membatasi ini ke domain frontend Anda.
+  // CORS (atur domain di produksi)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Handle preflight requests (OPTIONS)
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  try {
+    if (req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('id', { ascending: false });
+      if (error) throw error;
+      return res.status(200).json(data);
+    }
 
-  if (req.method === 'GET') {
-    // Contoh data dummy. Nantinya akan diganti dengan data dari database.
-    const products = [
-      { id: 1, name: "Dimsum Ayam (dari API)", price: 20000, currentStock: 95, isAvailable: true, stockHistory: [{ date: '2025-09-01', quantity: 100, type: 'initial' }] },
-      { id: 2, name: "Risol Beef Mayo (dari API)", price: 16000, currentStock: 120, isAvailable: true, stockHistory: [{ date: '2025-09-01', quantity: 120, type: 'initial' }] },
-      { id: 3, name: "Produk Baru (dari API)", price: 25000, currentStock: 50, isAvailable: true, stockHistory: [{ date: '2025-09-01', quantity: 50, type: 'initial' }] },
-    ];
-    res.status(200).json(products);
-  } else if (req.method === 'POST') {
-    // Contoh untuk menambahkan produk baru
-    const newProduct = req.body;
-    // Di sini Anda akan menyimpan newProduct ke database
-    // Untuk contoh ini, kita hanya mengembalikan produk yang diterima dengan ID dummy
-    const addedProduct = { ...newProduct, id: Date.now() };
-    res.status(201).json(addedProduct);
-  } else {
-    res.status(405).json({ message: 'Metode tidak diizinkan.' });
+    if (req.method === 'POST') {
+      const payload = req.body || {};
+      const mapped = camelToSnake(payload);
+      const { data, error } = await supabase
+        .from('products')
+        .insert(mapped)
+        .select('*')
+        .single();
+      if (error) throw error;
+      return res.status(201).json(data);
+    }
+
+    if (req.method === 'PUT' || req.method === 'PATCH') {
+      const body = req.body || {};
+      const id = body.id || body.productId || (req.query && req.query.id);
+      if (!id) return res.status(400).json({ message: 'Missing id' });
+
+      // Operasi khusus tambah stok
+      if (body.op === 'add_stock') {
+        const added = Number(body.addedQuantity || body.added_quantity || 0);
+        if (!Number.isFinite(added) || added <= 0) {
+          return res.status(400).json({ message: 'addedQuantity must be > 0' });
+        }
+
+        // Ambil produk saat ini
+        const { data: current, error: getErr } = await supabase
+          .from('products')
+          .select('current_stock, stock_history')
+          .eq('id', id)
+          .single();
+        if (getErr) throw getErr;
+
+        const today = new Date().toISOString().slice(0, 10);
+        const history = Array.isArray(current.stock_history) ? current.stock_history.slice() : [];
+        const existingIdx = history.findIndex((e) => e.date === today && e.type === 'addition');
+        if (existingIdx !== -1) history[existingIdx].quantity += added;
+        else history.push({ date: today, quantity: added, type: 'addition' });
+
+        const nextStock = Number(current.current_stock || 0) + added;
+        const { data, error } = await supabase
+          .from('products')
+          .update({ current_stock: nextStock, stock_history: history })
+          .eq('id', id)
+          .select('*')
+          .single();
+        if (error) throw error;
+        return res.status(200).json(data);
+      }
+
+      // Update umum (mis. toggle availability, edit fields)
+      const mapped = camelToSnake(body);
+      delete mapped.id;
+      delete mapped.product_id;
+      delete mapped.op;
+      const { data, error } = await supabase
+        .from('products')
+        .update(mapped)
+        .eq('id', id)
+        .select('*')
+        .single();
+      if (error) throw error;
+      return res.status(200).json(data);
+    }
+
+    if (req.method === 'DELETE') {
+      const id = (req.query && (req.query.id || (Array.isArray(req.query.id) ? req.query.id[0] : undefined))) || (req.body && req.body.id);
+      if (!id) return res.status(400).json({ message: 'Missing id' });
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+      return res.status(204).end();
+    }
+
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  } catch (e) {
+    return res.status(500).json({ message: e.message || 'Unexpected error' });
   }
 };

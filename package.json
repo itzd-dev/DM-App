@@ -7,9 +7,17 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "env:ls": "vercel env ls",
+    "env:add": "vercel env add",
+    "env:rm": "vercel env rm",
+    "env:pull": "vercel env pull .env.local",
+    "env:pull:dev": "vercel env pull --environment=development .env.development.local",
+    "env:pull:preview": "vercel env pull --environment=preview .env.preview.local",
+    "env:pull:prod": "vercel env pull --environment=production .env.production.local"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "@vercel/analytics": "^1.5.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
