@@ -805,7 +805,9 @@ export const AppProvider = ({ children }) => {
     }
     const capped = Math.floor(hardCap / step) * step;
     if (capped <= 0) {
-      showToast('Poin tidak cukup atau melebihi subtotal.');
+      if (subtotal <= 0) showToast('Keranjang kosong atau total belanja 0.');
+      else if (balance <= 0) showToast('Poin tidak cukup.');
+      else showToast('Melebihi nilai belanja yang bisa didiskon.');
       return 0;
     }
     if (n > capped) {
