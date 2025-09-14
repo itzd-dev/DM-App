@@ -891,6 +891,7 @@ export const AppProvider = ({ children }) => {
     }
     setPointsDiscount(0);
     showToast('Diskon poin dibatalkan & poin dikembalikan.');
+    try { localStorage.setItem('lastPointsResetAt', new Date().toISOString()); } catch {}
   };
 
   const toggleProductAvailability = (productId) => {
