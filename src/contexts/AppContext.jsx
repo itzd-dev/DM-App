@@ -54,7 +54,11 @@ export const AppProvider = ({ children }) => {
     { code: 'HEMAT10', discount: 0.1, type: 'percentage' },
     { code: 'DISKON5K', discount: 5000, type: 'fixed' },
   ]);
+  const [partners, setPartners] = useState(() => load('partners', [
+    { id: 1, name: 'Dapur Merifa', contact: '0812-xxxx-xxxx', notes: 'Owner utama' },
+  ]));
   const [appliedDiscount, setAppliedDiscount] = useState(() => load('appliedDiscount', null));
+  const [userIdentities, setUserIdentities] = useState([]);
 
   const updateOrderStatus = (orderId, newStatus) => {
     const prevSnapshot = orders;
@@ -87,6 +91,37 @@ export const AppProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Supabase Auth binding (Google OAuth or others)
+  useEffect(() => {
+    if (!supabase) return;
+    let mounted = true;
+    const applySession = (session) => {
+      if (!mounted) return;
+      if (session && session.user) {
+        const email = session.user.email;
+        const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name || email || 'Pengguna';
+        setIsLoggedIn(true);
+        setLoggedInUser({ email, name });
+        setUserRole(email === 'admin@dapurmerifa.com' ? 'admin' : 'buyer');
+        setUserIdentities(session.user.identities || []);
+      }
+    };
+    supabase.auth.getSession().then(({ data }) => applySession(data?.session));
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+      if (!session) {
+        setIsLoggedIn(false);
+        setLoggedInUser(null);
+        setUserRole(null);
+        setUserIdentities([]);
+      }
+    });
+    return () => {
+      mounted = false;
+      authListener?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
   // Normalize products coming from Supabase to match local shape
   const normalizeProduct = (p) => ({
     id: p.id,
@@ -95,6 +130,7 @@ export const AppProvider = ({ children }) => {
     category: p.category ?? '',
     image: p.image ?? 'https://placehold.co/400x400/EAE0D5/3D2C1D?text=Produk',
     description: p.description ?? '',
+    owner: p.owner ?? '',
     featured: Boolean(p.featured ?? false),
     tags: Array.isArray(p.tags) ? p.tags : [],
     allergens: Array.isArray(p.allergens) ? p.allergens : [],
@@ -148,6 +184,7 @@ export const AppProvider = ({ children }) => {
   useEffect(() => { save('loggedInUser', loggedInUser); }, [loggedInUser]);
   useEffect(() => { save('userRole', userRole); }, [userRole]);
   useEffect(() => { save('appliedDiscount', appliedDiscount); }, [appliedDiscount]);
+  useEffect(() => { save('partners', partners); }, [partners]);
 
   const navigateTo = (pageId, options = {}) => {
     const { trackHistory = true, context = {} } = options;
@@ -285,16 +322,92 @@ export const AppProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setIsLoggedIn(false);
-    setUserRole(null);
-    setLoggedInUser(null);
-    // Clear persisted auth data
+    (async () => {
+      try {
+        if (supabase) {
+          await supabase.auth.signOut();
+        }
+      } catch {}
+      setIsLoggedIn(false);
+      setUserRole(null);
+      setLoggedInUser(null);
+      // Clear persisted auth data
+      try {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('loggedInUser');
+      } catch {}
+      navigateTo('auth');
+    })();
+  };
+
+  const loginWithGoogle = () => {
+    if (!supabase) {
+      showToast('Konfigurasi Supabase belum tersedia');
+      return;
+    }
     try {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('loggedInUser');
-    } catch {}
-    navigateTo('auth');
+      const redirectTo = window.location.origin;
+      supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal membuka login Google');
+    }
+  };
+
+  const signUpWithEmail = async (email, password, name) => {
+    if (!supabase) {
+      // fallback demo mode
+      login(email, name || 'Pengguna');
+      return { data: null, error: null };
+    }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } },
+      });
+      if (error) throw error;
+      showToast('Pendaftaran berhasil. Cek email untuk verifikasi.');
+      return { data, error: null };
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || 'Gagal mendaftar');
+      return { data: null, error };
+    }
+  };
+
+  const signInWithEmail = async (email, password) => {
+    if (!supabase) {
+      // fallback demo mode
+      login(email, 'Pengguna');
+      return { data: null, error: null };
+    }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      showToast('Berhasil masuk');
+      return { data, error: null };
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || 'Gagal masuk');
+      return { data: null, error };
+    }
+  };
+
+  const linkGoogle = async () => {
+    if (!supabase) return showToast('Konfigurasi Supabase belum tersedia');
+    try {
+      const redirectTo = window.location.origin;
+      if (typeof supabase.auth.linkIdentity === 'function') {
+        await supabase.auth.linkIdentity({ provider: 'google', options: { redirectTo } });
+      } else {
+        await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal menghubungkan Google');
+    }
   };
 
   const placeOrder = () => {
@@ -310,10 +423,7 @@ export const AppProvider = ({ children }) => {
       }
     }
 
-    const orderId = `DM-${Date.now().toString().slice(-6)}`;
-
-    const newOrder = {
-      id: orderId,
+    const newOrderBase = {
       customer: loggedInUser ? loggedInUser.name : 'Pembeli Baru', // Use loggedInUser name
       customerEmail: loggedInUser ? loggedInUser.email : 'guest@example.com', // Store email
       items: [...cart],
@@ -323,8 +433,6 @@ export const AppProvider = ({ children }) => {
       date: new Date().toISOString().slice(0, 10), // Add current date
     };
 
-    setOrders(prevOrders => [newOrder, ...prevOrders]);
-    setLastOrderDetails(newOrder);
     setAppliedDiscount(null); // Clear discount after placing order
 
     // Decrement stock for ordered items and add to stock history
@@ -353,8 +461,6 @@ export const AppProvider = ({ children }) => {
         return product;
       })
     );
-
-
     // Add points to customer
     if (loggedInUser && loggedInUser.email) {
       const pointsEarned = Math.floor(total / 10000); // 1 point per 10,000 IDR
@@ -385,7 +491,34 @@ export const AppProvider = ({ children }) => {
       }
     })();
 
-    navigateTo('order-success');
+    // Simpan ke server dan dapatkan ID berformat DM-00001
+    (async () => {
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrderBase),
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          setOrders(prev => [saved, ...prev]);
+          setLastOrderDetails(saved);
+        } else {
+          // Fallback: generate client ID if API not available
+          const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
+          const newOrder = { id: fallbackId, ...newOrderBase };
+          setOrders(prev => [newOrder, ...prev]);
+          setLastOrderDetails(newOrder);
+        }
+      } catch (e) {
+        const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
+        const newOrder = { id: fallbackId, ...newOrderBase };
+        setOrders(prev => [newOrder, ...prev]);
+        setLastOrderDetails(newOrder);
+      } finally {
+        navigateTo('order-success');
+      }
+    })();
   };
 
   const backToHome = () => {
@@ -618,6 +751,22 @@ export const AppProvider = ({ children }) => {
     })();
   };
 
+  // Partners (local-state; bisa dihubungkan ke DB bila diperlukan)
+  const addPartner = (data) => {
+    const nextId = partners.length ? Math.max(...partners.map(p => Number(p.id) || 0)) + 1 : 1;
+    const newP = { id: nextId, ...data };
+    setPartners(prev => [newP, ...prev]);
+    showToast('Mitra ditambahkan.');
+  };
+  const editPartner = (id, data) => {
+    setPartners(prev => prev.map(p => (p.id === id ? { ...p, ...data } : p)));
+    showToast('Mitra diperbarui.');
+  };
+  const deletePartner = (id) => {
+    setPartners(prev => prev.filter(p => p.id !== id));
+    showToast('Mitra dihapus.');
+  };
+
   const applyDiscount = (code) => {
     const promo = promotions.find(p => p.code.toUpperCase() === code.toUpperCase());
     if (promo) {
@@ -699,6 +848,7 @@ export const AppProvider = ({ children }) => {
     products,
     orders,
     promotions,
+    partners,
     customerPoints,
     customerProfiles,
     appliedDiscount,
@@ -724,10 +874,18 @@ export const AppProvider = ({ children }) => {
     updateProductStock,
     addPromotion,
     deletePromotion,
+    addPartner,
+    editPartner,
+    deletePartner,
     applyDiscount,
     exportOrdersToCsv,
     redeemPoints,
     showToast,
+    loginWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
+    linkGoogle,
+    userIdentities,
     refetchProducts,
     refetchOrders,
     refetchPromotions

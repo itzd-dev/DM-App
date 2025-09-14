@@ -11,6 +11,7 @@ const AdminLayout = ({ children }) => {
     { id: 'products', label: 'Manajemen Produk', icon: 'fa-cogs' },
     { id: 'customers', label: 'Manajemen Pelanggan', icon: 'fa-users' },
     { id: 'promotions', label: 'Promosi', icon: 'fa-tags' },
+    { id: 'partners', label: 'Mitra', icon: 'fa-handshake' },
   ];
 
   return (

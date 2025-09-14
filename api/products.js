@@ -19,7 +19,7 @@ const camelToSnake = (obj) => {
 
 const whitelistProductFields = (row) => {
   // Only keep columns that exist in products table
-  const allowed = ['name','price','category','image','description','featured','tags','allergens','rating','review_count','sold_count','is_available','current_stock','stock_history'];
+  const allowed = ['name','price','category','image','description','owner','featured','tags','allergens','rating','review_count','sold_count','is_available','current_stock','stock_history'];
   const out = {};
   for (const key of allowed) {
     if (row[key] !== undefined) out[key] = row[key];

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const ProductManagement = () => {
-  const { products, formatRupiah, addProduct, editProduct, deleteProduct, toggleProductAvailability, updateProductStock } = useAppContext();
+  const { products, partners, formatRupiah, addProduct, editProduct, deleteProduct, toggleProductAvailability, updateProductStock } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({});
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
@@ -14,7 +14,7 @@ const ProductManagement = () => {
     if (product) {
       setFormData(product);
     } else {
-      setFormData({ name: '', category: '', price: 0, description: '', image: '', isAvailable: true, currentStock: 0 }); // Initialize currentStock for new products
+      setFormData({ name: '', category: '', price: 0, description: '', image: '', isAvailable: true, currentStock: 0, owner: '' }); // Initialize currentStock for new products
     }
     setIsModalOpen(true);
   };
@@ -105,6 +105,9 @@ const ProductManagement = () => {
                 <div>
                   <p className="font-bold text-brand-text">{product.name}</p>
                   <p className="text-sm text-brand-text-light">{product.category} / {formatRupiah(product.price)}</p>
+                  {product.owner && (
+                    <p className="text-xs text-brand-text-light mt-0.5">Pemilik: <span className="font-medium text-brand-text">{product.owner}</span></p>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {product.isAvailable ? 'Tersedia' : 'Stok Habis'}
@@ -159,7 +162,7 @@ const ProductManagement = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-brand-text-light">Kategori</label>
-                      <input type="text" name="category" value={formData.category} onChange={handleInputChange} className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg" required />
+                      <CategorySelect value={formData.category} onChange={(v) => setFormData(prev => ({ ...prev, category: v }))} products={products} />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-brand-text-light">Harga</label>
@@ -169,6 +172,10 @@ const ProductManagement = () => {
                       <label className="text-sm font-medium text-brand-text-light">Stok Saat Ini</label> {/* Stock input */}
                       <input type="number" name="currentStock" value={formData.currentStock} onChange={handleInputChange} className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg" required />
                     </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-brand-text-light">Pemilik Produk (Mitra)</label>
+                    <PartnerSelect value={formData.owner || ''} onChange={(v) => setFormData(prev => ({ ...prev, owner: v }))} partnersLocal={partners} />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-brand-text-light">Deskripsi</label>
@@ -213,3 +220,68 @@ const ProductManagement = () => {
 };
 
 export default ProductManagement;
+
+// Helper component: category dropdown built from existing products
+const CategorySelect = ({ value, onChange, products }) => {
+  const categories = Array.from(new Set((products || []).map(p => p.category).filter(Boolean))).sort();
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg bg-white"
+      required
+    >
+      <option value="" disabled>Pilih kategori</option>
+      {categories.map((c) => (
+        <option key={c} value={c}>{c}</option>
+      ))}
+    </select>
+  );
+};
+
+// Helper component: partner dropdown fetched from API (fallback ke local partners)
+const PartnerSelect = ({ value, onChange, partnersLocal = [] }) => {
+  const [options, setOptions] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/partners');
+        if (res.ok) {
+          const rows = await res.json();
+          if (active && Array.isArray(rows)) {
+            setOptions(rows.map(r => r.name).filter(Boolean));
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (_) {}
+      // fallback ke partnersLocal
+      if (active) {
+        setOptions(Array.from(new Set(partnersLocal.map(p => p.name).filter(Boolean))).sort());
+        setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false };
+  }, [partnersLocal]);
+
+  if (loading) {
+    return <div className="mt-1 text-xs text-brand-text-light">Memuat mitra…</div>;
+  }
+
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg bg-white"
+    >
+      <option value="">Pilih mitra (opsional)</option>
+      {options.map((name) => (
+        <option key={name} value={name}>{name}</option>
+      ))}
+    </select>
+  );
+};

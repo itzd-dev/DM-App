@@ -2,22 +2,20 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Auth = () => {
-  const { login } = useAppContext();
+  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail } = useAppContext();
   const [authTab, setAuthTab] = useState('login');
   const [loginEmail, setLoginEmail] = useState('pengguna@email.com');
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    login(loginEmail, 'Pengguna'); // Pass a default name for login
+    await signInWithEmail(loginEmail, (document.getElementById('login-password')?.value || ''));
   }
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // In a real app, you'd send registerName, registerEmail, and password to a backend
-    // For this demo, we'll just log them in as a new buyer
-    login(registerEmail, registerName);
+    await signUpWithEmail(registerEmail, (document.getElementById('register-password')?.value || ''), registerName);
   }
 
   return (
@@ -28,6 +26,16 @@ const Auth = () => {
       <p className="text-brand-text-light text-center text-sm mb-6">
         Masuk atau buat akun untuk melanjutkan.
       </p>
+
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={loginWithGoogle}
+          className="w-full bg-white border-2 border-brand-subtle text-brand-text font-semibold py-3 rounded-lg hover:bg-brand-bg transition text-sm flex items-center justify-center gap-2">
+          <i className="fab fa-google text-red-500"></i>
+          Masuk/Daftar dengan Google
+        </button>
+      </div>
 
       <div className="flex border-b border-brand-subtle mb-6">
         <button

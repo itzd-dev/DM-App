@@ -24,6 +24,7 @@ import OrderManagement from './pages/OrderManagement';
 import ProductManagement from './pages/ProductManagement';
 import CustomerManagement from './pages/CustomerManagement';
 import Promotions from './pages/Promotions';
+import Partners from './pages/Partners';
 
 const App = () => {
   const { currentPage, userRole, adminPage } = useAppContext();
@@ -42,6 +43,8 @@ const App = () => {
           return <CustomerManagement />;
         case 'promotions':
           return <Promotions />;
+        case 'partners':
+          return <Partners />;
         default:
           return <Dashboard />;
       }

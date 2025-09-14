@@ -32,6 +32,7 @@ const headers = [
   'category',
   'image',
   'description',
+  'owner',
   'featured',
   'tags',
   'allergens',
@@ -45,12 +46,14 @@ const headers = [
 
 const rows = products.map((p) => {
   const stockHistory = p.stockHistory ?? [];
+  const defaultOwner = 'Dapur Merifa';
   const line = [
     p.name,
     p.price,
     p.category ?? '',
     p.image ?? '',
     p.description ?? '',
+    (p.owner && String(p.owner).trim()) ? p.owner : defaultOwner,
     Boolean(p.featured ?? false),
     toPgArray(p.tags ?? []),
     toPgArray(p.allergens ?? []),

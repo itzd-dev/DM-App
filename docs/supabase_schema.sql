@@ -6,6 +6,7 @@ create table if not exists public.products (
   category text,
   image text,
   description text,
+  owner text,
   featured boolean default false,
   tags text[] default '{}'::text[],
   allergens text[] default '{}'::text[],
@@ -20,6 +21,8 @@ create table if not exists public.products (
 -- Optional helpful indexes
 create index if not exists products_category_idx on public.products (category);
 create index if not exists products_featured_idx on public.products (featured);
+create index if not exists products_is_available_idx on public.products (is_available);
+create index if not exists products_owner_idx on public.products (owner);
 
 -- Enable RLS and allow public read (anon); restrict writes to server (service role)
 alter table public.products enable row level security;
@@ -33,3 +36,7 @@ end $$;
 
 -- Note: Service Role key (used in Vercel serverless functions) bypasses RLS, so no write policy is necessary for public role.
 
+-- Migration helper (if products already exists):
+-- alter table public.products add column if not exists owner text;
+-- create index if not exists products_is_available_idx on public.products (is_available);
+-- create index if not exists products_owner_idx on public.products (owner);

@@ -9,6 +9,7 @@ Disarankan kolom:
 - category
 - image
 - description
+- owner
 - featured
 - tags (text[])
 - allergens (text[])
@@ -22,4 +23,3 @@ Disarankan kolom:
 Catatan:
 - Normalizer juga memahami snake_case seperti `review_count`, `sold_count`, `is_available`, `current_stock`, `stock_history`.
 - Lihat file `docs/supabase_schema.sql` untuk SQL lengkap pembuatan tabel dan contoh kebijakan RLS read-only untuk publik.
-

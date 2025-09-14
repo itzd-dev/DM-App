@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Profile = () => {
-  const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products } = useAppContext();
+  const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle } = useAppContext();
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
 
   const userEmail = loggedInUser?.email;
@@ -10,6 +10,26 @@ const Profile = () => {
   const currentPoints = customerPoints[userEmail] || 0;
   const userProfile = customerProfiles[userEmail];
   const favoriteProducts = userProfile?.favoriteProducts?.map(id => products.find(p => p.id === id)).filter(Boolean) || [];
+
+  // Simple recommendations: prioritize categories from favorites, exclude wishlist; fallback to featured/top sold
+  const wishIds = wishlist || [];
+  const preferredCategories = Array.from(new Set(favoriteProducts.map(p => p.category).filter(Boolean)));
+  let recommended = products
+    .filter(p => preferredCategories.includes(p.category) && !wishIds.includes(p.id))
+    .slice(0, 6);
+  if (recommended.length < 6) {
+    const extra = products
+      .filter(p => p.featured && !wishIds.includes(p.id) && !recommended.find(r => r.id === p.id))
+      .slice(0, 6 - recommended.length);
+    recommended = [...recommended, ...extra];
+  }
+  if (recommended.length < 6) {
+    const extra2 = products
+      .filter(p => !wishIds.includes(p.id) && !recommended.find(r => r.id === p.id))
+      .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+      .slice(0, 6 - recommended.length);
+    recommended = [...recommended, ...extra2];
+  }
 
   const handleRedeemPoints = () => {
     if (pointsToRedeem > 0) {
@@ -66,6 +86,34 @@ const Profile = () => {
               <div key={product.id} className="flex flex-col items-center text-center">
                 <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded-md mb-1" />
                 <p className="text-xs font-medium text-brand-text truncate w-full">{product.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Account & Security */}
+      <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
+        <h3 className="font-semibold text-brand-primary mb-2">Akun & Keamanan</h3>
+        <p className="text-sm text-brand-text-light mb-2">Email: <span className="text-brand-text font-medium">{userEmail || '-'}</span></p>
+        {Array.isArray(userIdentities) && userIdentities.some(id => id.provider === 'google') ? (
+          <p className="text-xs text-green-700 bg-green-100 inline-block px-2 py-0.5 rounded">Terhubung ke Google</p>
+        ) : (
+          <button onClick={linkGoogle} className="text-xs bg-white border border-brand-subtle px-3 py-1 rounded hover:bg-brand-bg">
+            Hubungkan Google
+          </button>
+        )}
+      </div>
+
+      {/* Recommendations Section */}
+      {recommended.length > 0 && (
+        <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
+          <h3 className="font-semibold text-brand-primary mb-2">Rekomendasi Untuk Anda</h3>
+          <div className="grid grid-cols-3 gap-3">
+            {recommended.map(product => (
+              <div key={product.id} className="flex flex-col items-center text-center" onClick={() => navigateTo('product-detail', { context: { productId: product.id } })}>
+                <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded-md mb-1" />
+                <p className="text-[11px] font-medium text-brand-text truncate w-full">{product.name}</p>
               </div>
             ))}
           </div>
