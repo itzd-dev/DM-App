@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Profile = () => {
-  const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle, getAuthHeaders } = useAppContext();
+  const { logout, navigateTo, loggedInUser, customerPoints, customerProfiles, redeemPoints, formatRupiah, products, wishlist, userIdentities, linkGoogle, getAuthHeaders, cart, appliedDiscount, pointsDiscount } = useAppContext();
   const [pointsToRedeem, setPointsToRedeem] = useState('');
   const [history, setHistory] = useState([]);
   const [apiPoints, setApiPoints] = useState(null);
@@ -12,6 +12,16 @@ const Profile = () => {
   const currentPoints = (apiPoints !== null ? apiPoints : (customerPoints[userEmail] || 0));
   const userProfile = customerProfiles[userEmail];
   const favoriteProducts = userProfile?.favoriteProducts?.map(id => products.find(p => p.id === id)).filter(Boolean) || [];
+  // Hitung batas maksimal poin yang bisa diredeem saat ini (berdasarkan keranjang aktif)
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  let discountAmount = 0;
+  if (appliedDiscount) {
+    discountAmount = appliedDiscount.type === 'percentage' ? subtotal * appliedDiscount.discount : appliedDiscount.discount;
+  }
+  const remainingCurrencyCap = Math.max(0, subtotal - discountAmount - (pointsDiscount || 0));
+  const maxBySubtotalPoints = Math.floor(remainingCurrencyCap / 100); // 1 poin = Rp100 (50 poin = Rp5.000)
+  const balancePoints = currentPoints;
+  const maxAllowed = Math.floor(Math.min(balancePoints, maxBySubtotalPoints) / 50) * 50; // kelipatan 50
 
   // Simple recommendations: prioritize categories from favorites, exclude wishlist; fallback to featured/top sold
   const wishIds = wishlist || [];
@@ -112,7 +122,12 @@ const Profile = () => {
             onChange={(e) => {
               const v = e.target.value;
               if (v === '') return setPointsToRedeem('');
-              if (/^\d+$/.test(v)) setPointsToRedeem(v);
+              if (/^\d+$/.test(v)) {
+                let n = parseInt(v, 10) || 0;
+                n = Math.floor(n / 50) * 50; // normalisasi kelipatan 50
+                if (maxAllowed > 0 && n > maxAllowed) n = maxAllowed; // batasi maksimum
+                setPointsToRedeem(n > 0 ? String(n) : '');
+              }
             }}
             className="w-full px-3 py-2 border border-brand-subtle rounded-lg text-sm"
             placeholder="Jumlah poin untuk ditukar"
@@ -122,6 +137,7 @@ const Profile = () => {
             Tukar
           </button>
         </div>
+        <p className="text-xs text-brand-text-light mt-2">Maksimal: <span className="font-semibold text-brand-text">{maxAllowed}</span> poin ({formatRupiah((maxAllowed || 0) * 100)})</p>
       </div>
 
       {/* Favorite Products Section */}
