@@ -112,35 +112,12 @@ const Profile = () => {
       <div className="bg-brand-bg rounded-lg border border-brand-subtle p-4 mb-4">
         <h3 className="font-semibold text-brand-primary mb-2">Poin Loyalitas Anda</h3>
         <p className="text-2xl font-bold text-brand-text mb-2">{currentPoints} Poin</p>
-        <p className="text-sm text-brand-text-light">50 poin = Rp 5.000 diskon (kelipatan 50)</p>
-        <div className="flex mt-3 space-x-2">
-          <input 
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={pointsToRedeem}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === '') return setPointsToRedeem('');
-              // Izinkan ketik angka bebas terlebih dahulu; normalisasi saat blur/submit
-              if (/^\d+$/.test(v)) setPointsToRedeem(v);
-            }}
-            onBlur={() => {
-              if (pointsToRedeem === '') return;
-              let n = parseInt(pointsToRedeem, 10) || 0;
-              n = Math.floor(n / 50) * 50;
-              if (maxAllowed > 0 && n > maxAllowed) n = maxAllowed;
-              setPointsToRedeem(n > 0 ? String(n) : '');
-            }}
-            className="w-full px-3 py-2 border border-brand-subtle rounded-lg text-sm"
-            placeholder="Jumlah poin untuk ditukar"
-            aria-label="Jumlah poin untuk ditukar"
-          />
-          <button onClick={handleRedeemPoints} className="bg-brand-accent text-white font-bold py-2 px-4 rounded-lg text-sm">
-            Tukar
+        <p className="text-sm text-brand-text-light">Gunakan poin saat di Keranjang atau Checkout.</p>
+        <div className="flex mt-3">
+          <button onClick={() => navigateTo('cart')} className="bg-brand-primary text-white font-bold py-2 px-4 rounded-lg text-sm">
+            Tukar Poin di Keranjang
           </button>
         </div>
-        <p className="text-xs text-brand-text-light mt-2">Maksimal: <span className="font-semibold text-brand-text">{maxAllowed}</span> poin ({formatRupiah((maxAllowed || 0) * 100)})</p>
       </div>
 
       {/* Favorite Products Section */}

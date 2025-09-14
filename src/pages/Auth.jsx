@@ -34,16 +34,6 @@ const Auth = () => {
         Masuk atau buat akun untuk melanjutkan.
       </p>
 
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={loginWithGoogle}
-          className="w-full bg-white border-2 border-brand-subtle text-brand-text font-semibold py-3 rounded-lg hover:bg-brand-bg transition text-sm flex items-center justify-center gap-2">
-          <i className="fab fa-google text-red-500"></i>
-          Masuk/Daftar dengan Google
-        </button>
-      </div>
-
       <div className="flex border-b border-brand-subtle mb-6">
         <button
           id="login-tab"
@@ -73,8 +63,12 @@ const Auth = () => {
         <button type="submit" className="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition text-sm">
           Masuk
         </button>
-        <button type="button" onClick={() => setLoginEmail('admin@dapurmerifa.com')} className="w-full mt-2 text-brand-primary font-semibold py-2 rounded-lg text-xs">
-          (Coba login sebagai Admin)
+        <button
+          type="button"
+          onClick={loginWithGoogle}
+          className="w-full mt-3 bg-white border-2 border-brand-subtle text-brand-text font-semibold py-3 rounded-lg hover:bg-brand-bg transition text-sm flex items-center justify-center gap-2">
+          <i className="fab fa-google text-red-500"></i>
+          Masuk/Daftar dengan Google
         </button>
       </form>
 
