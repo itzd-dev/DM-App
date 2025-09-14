@@ -100,7 +100,7 @@ const ProductManagement = () => {
           {products.map((product, index) => (
             <div key={product.id} className="border border-brand-subtle rounded-lg p-3 flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <span className="font-bold text-brand-text text-lg w-8 text-center">{index + 1}.</span>
+                <span className="font-bold text-brand-text text-lg w-12 text-center">{product.id}.</span>
                 <img src={product.image} alt={product.name} className="w-16 h-16 rounded-md object-cover" />
                 <div>
                   <p className="font-bold text-brand-text">{product.name}</p>
