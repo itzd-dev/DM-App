@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Auth = () => {
-  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail, navigateTo } = useAppContext();
+  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail, navigateTo, isLoggedIn } = useAppContext();
   const [authTab, setAuthTab] = useState('login');
   const [loginEmail, setLoginEmail] = useState('pengguna@email.com');
   const [registerName, setRegisterName] = useState('');
@@ -19,6 +19,11 @@ const Auth = () => {
     const { error } = await signUpWithEmail(registerEmail, (document.getElementById('register-password')?.value || ''), registerName);
     if (!error) navigateTo('profile');
   }
+
+  // Jika sesi sudah aktif (misal sesaat setelah login), arahkan ke profil
+  useEffect(() => {
+    if (isLoggedIn) navigateTo('profile');
+  }, [isLoggedIn]);
 
   return (
     <section id="page-auth" className="page-section p-8">
