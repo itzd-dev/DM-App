@@ -1,14 +1,14 @@
 // dapurmerifa/api/promotions.js
 // Serverless API untuk kode promo via Supabase
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS (batasi domain di produksi)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -49,5 +49,4 @@ module.exports = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ message: e.message || 'Unexpected error' });
   }
-};
-
+}

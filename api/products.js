@@ -1,7 +1,7 @@
 // dapurmerifa/api/products.js
 // Serverless API untuk CRUD produk via Supabase (server-side, aman untuk write)
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -35,7 +35,7 @@ const whitelistProductFields = (row) => {
   return out;
 };
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS (atur domain di produksi)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -128,4 +128,4 @@ module.exports = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ message: e.message || 'Unexpected error' });
   }
-};
+}
