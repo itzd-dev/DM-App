@@ -127,6 +127,9 @@ export const AppProvider = ({ children }) => {
         setLoggedInUser({ email, name });
         fetchAndSetRole(session);
         setUserIdentities(session.user.identities || []);
+        // Arahkan ke profil setelah berhasil login (tanpa menunggu tombol)
+        setCurrentPage('profile');
+        setPageHistory(['profile']);
       }
     };
     supabase.auth.getSession().then(({ data }) => applySession(data?.session));

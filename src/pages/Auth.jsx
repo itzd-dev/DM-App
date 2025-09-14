@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Auth = () => {
-  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail } = useAppContext();
+  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail, navigateTo } = useAppContext();
   const [authTab, setAuthTab] = useState('login');
   const [loginEmail, setLoginEmail] = useState('pengguna@email.com');
   const [registerName, setRegisterName] = useState('');
@@ -10,12 +10,14 @@ const Auth = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    await signInWithEmail(loginEmail, (document.getElementById('login-password')?.value || ''));
+    const { error } = await signInWithEmail(loginEmail, (document.getElementById('login-password')?.value || ''));
+    if (!error) navigateTo('profile');
   }
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    await signUpWithEmail(registerEmail, (document.getElementById('register-password')?.value || ''), registerName);
+    const { error } = await signUpWithEmail(registerEmail, (document.getElementById('register-password')?.value || ''), registerName);
+    if (!error) navigateTo('profile');
   }
 
   return (
