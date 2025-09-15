@@ -68,7 +68,7 @@ const Admin = () => {
       </div>
 
       {/* Filter chips (horizontal scroll on mobile) */}
-      <div className="md:sticky md:top-16 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-10 rounded-md border border-brand-subtle p-2 mb-3 overflow-x-auto no-scrollbar">
+      <div className="sticky top-16 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-10 rounded-md border border-brand-subtle p-2 mb-3 overflow-x-auto no-scrollbar">
         <div className="flex gap-2 min-w-max">
           {chips.map(c => (
             <button key={c} onClick={() => setStatusFilter(c)} className={`px-3 py-1 rounded-full text-xs font-medium border ${statusFilter === c ? 'bg-brand-primary text-white border-brand-primary' : 'bg-white text-brand-text-light border-brand-subtle'}`}>
@@ -78,14 +78,14 @@ const Admin = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-3 md:p-4">
+      <div className="bg-white rounded-lg shadow-md p-3">
         <h3 className="text-lg font-semibold text-brand-text mb-3">Daftar Orderan</h3>
         <div className="space-y-2">
           {filteredOrders.map(order => (
             <div key={order.id} onClick={() => handleOrderClick(order)} className="border border-brand-subtle rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg">
               <div>
                 <p className="font-bold text-brand-text">{order.id}</p>
-                <p className="text-xs md:text-sm text-brand-text-light">{order.customer}</p>
+                <p className="text-xs text-brand-text-light">{order.customer}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-brand-primary">{formatRupiah(order.total)}</p>
@@ -99,8 +99,8 @@ const Admin = () => {
       </div>
 
       {isModalOpen && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-xl p-5 md:p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl p-5 w-full max-w-md">
             <h3 className="text-lg font-bold text-brand-primary mb-2">Detail Order: {selectedOrder.id}</h3>
             <p className="text-sm text-brand-text-light mb-2">Customer: {selectedOrder.customer}</p>
             <p className="text-xs text-brand-text-light mb-4">Status: <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getStatusClass(selectedOrder.status)}`}>{selectedOrder.status}</span></p>

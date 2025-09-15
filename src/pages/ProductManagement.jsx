@@ -102,7 +102,7 @@ const ProductManagement = () => {
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="border border-brand-subtle rounded-lg p-3 md:flex md:justify-between md:items-center"
+              className="border border-brand-subtle rounded-lg p-3"
               onTouchStart={(e) => {
                 const t = e.touches && e.touches[0];
                 if (!t) return;
@@ -118,6 +118,7 @@ const ProductManagement = () => {
                   setOpenActionsId((cur) => (cur === product.id ? null : product.id));
                 }
               }}
+              onClick={() => setOpenActionsId((cur) => (cur === product.id ? null : product.id))}
             >
               <div className="flex items-center space-x-3">
                 <span className="font-bold text-brand-text text-lg w-12 text-center">{product.id}.</span>
@@ -139,13 +140,13 @@ const ProductManagement = () => {
                 </div>
               </div>
               {/* Actions (swipe to reveal on mobile; always visible on desktop) */}
-              <div className={`${openActionsId === product.id ? 'grid' : 'hidden'} md:grid grid-cols-2 gap-2 mt-3`}>
-                <button onClick={() => openModal(product)} className="bg-blue-500 text-white h-9 rounded-lg text-xs">Edit</button>
-                <button onClick={() => openStockModal(product.id)} className="bg-purple-500 text-white h-9 rounded-lg text-xs">Tambah Stok</button>
-                <button onClick={() => toggleProductAvailability(product.id)} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white h-9 rounded-lg text-xs`}>
+              <div className={`${openActionsId === product.id ? 'grid' : 'hidden'} grid-cols-2 gap-2 mt-3`}>
+                <button onClick={(e) => { e.stopPropagation(); openModal(product); }} className="bg-blue-500 text-white h-9 rounded-lg text-xs">Edit</button>
+                <button onClick={(e) => { e.stopPropagation(); openStockModal(product.id); }} className="bg-purple-500 text-white h-9 rounded-lg text-xs">Tambah Stok</button>
+                <button onClick={(e) => { e.stopPropagation(); toggleProductAvailability(product.id); }} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white h-9 rounded-lg text-xs`}>
                   {product.isAvailable ? 'Stok Habis' : 'Tersedia'}
                 </button>
-                <button onClick={() => handleDelete(product.id)} className="bg-red-500 text-white h-9 rounded-lg text-xs">Hapus</button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} className="bg-red-500 text-white h-9 rounded-lg text-xs">Hapus</button>
               </div>
             </div>
           ))}
