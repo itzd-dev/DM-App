@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const ProductManagement = () => {
@@ -9,6 +9,8 @@ const ProductManagement = () => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [stockToAdd, setStockToAdd] = useState(0);
   const [tempObjectUrl, setTempObjectUrl] = useState(null);
+  const [openActionsId, setOpenActionsId] = useState(null);
+  const touchStoreRef = useRef({});
 
   const openModal = (product = null) => {
     if (product) {
@@ -98,7 +100,25 @@ const ProductManagement = () => {
       <div className="bg-white rounded-lg shadow-md p-4">
         <div className="space-y-3">
           {products.map((product, index) => (
-            <div key={product.id} className="border border-brand-subtle rounded-lg p-3 md:flex md:justify-between md:items-center">
+            <div
+              key={product.id}
+              className="border border-brand-subtle rounded-lg p-3 md:flex md:justify-between md:items-center"
+              onTouchStart={(e) => {
+                const t = e.touches && e.touches[0];
+                if (!t) return;
+                touchStoreRef.current[product.id] = { x: t.clientX, y: t.clientY, time: Date.now() };
+              }}
+              onTouchEnd={(e) => {
+                const start = touchStoreRef.current[product.id];
+                const t = e.changedTouches && e.changedTouches[0];
+                if (!start || !t) return;
+                const dx = t.clientX - start.x;
+                const dy = t.clientY - start.y;
+                if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
+                  setOpenActionsId((cur) => (cur === product.id ? null : product.id));
+                }
+              }}
+            >
               <div className="flex items-center space-x-3">
                 <span className="font-bold text-brand-text text-lg w-12 text-center">{product.id}.</span>
                 <img src={product.image} alt={product.name} className="w-16 h-16 rounded-md object-cover" />
@@ -118,18 +138,8 @@ const ProductManagement = () => {
                   </div>
                 </div>
               </div>
-              {/* Actions desktop */}
-              <div className="hidden md:flex space-x-2">
-                <button onClick={() => openModal(product)} className="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs">Edit</button>
-                <button onClick={() => openStockModal(product.id)} className="bg-purple-500 text-white px-3 py-1 rounded-lg text-xs">Tambah Stok</button>
-                <button onClick={() => toggleProductAvailability(product.id)} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white px-3 py-1 rounded-lg text-xs`}>
-                  {product.isAvailable ? 'Stok Habis' : 'Tersedia'}
-                </button>
-                <button onClick={() => handleDelete(product.id)} className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs">Hapus</button>
-              </div>
-
-              {/* Actions mobile (below card) */}
-              <div className="grid grid-cols-2 gap-2 mt-3 md:hidden">
+              {/* Actions (swipe to reveal on mobile; always visible on desktop) */}
+              <div className={`${openActionsId === product.id ? 'grid' : 'hidden'} md:grid grid-cols-2 gap-2 mt-3`}>
                 <button onClick={() => openModal(product)} className="bg-blue-500 text-white h-9 rounded-lg text-xs">Edit</button>
                 <button onClick={() => openStockModal(product.id)} className="bg-purple-500 text-white h-9 rounded-lg text-xs">Tambah Stok</button>
                 <button onClick={() => toggleProductAvailability(product.id)} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white h-9 rounded-lg text-xs`}>
