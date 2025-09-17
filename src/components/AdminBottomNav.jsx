@@ -13,7 +13,7 @@ const AdminBottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white flex justify-around max-w-[375px] mx-auto z-20 border-t border-brand-subtle md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white flex justify-around w-full max-w-[375px] mx-auto z-20 border-t border-brand-subtle md:hidden">
       {navItems.map(item => (
         <button
           key={item.id}
