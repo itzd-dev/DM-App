@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from './contexts/AppContext';
 
 // Layouts
@@ -59,92 +59,109 @@ const RequireAdmin = ({ children }) => {
   return children;
 };
 
+const AdminRedirect = () => {
+  const { isLoggedIn, userRole } = useAppContext();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (isLoggedIn && userRole === 'admin' && !location.pathname.startsWith('/admin')) {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isLoggedIn, userRole, navigate, location.pathname]);
+
+  return null;
+};
+
 const App = () => (
-  <Routes>
-    <Route element={<BuyerShell />}>
-      <Route index element={<Home />} />
-      <Route path="products" element={<Products />} />
-      <Route path="search" element={<Search />} />
-      <Route
-        path="wishlist"
-        element={(
-          <RequireAuth>
-            <Wishlist />
-          </RequireAuth>
-        )}
-      />
-      <Route
-        path="cart"
-        element={(
-          <RequireAuth>
-            <Cart />
-          </RequireAuth>
-        )}
-      />
-      <Route path="product/:productId" element={<ProductDetail />} />
-      <Route
-        path="checkout"
-        element={(
-          <RequireAuth>
-            <Checkout />
-          </RequireAuth>
-        )}
-      />
-      <Route path="order/success" element={<OrderSuccess />} />
-      <Route path="auth" element={<Auth />} />
-      <Route
-        path="profile"
-        element={(
-          <RequireAuth>
-            <Profile />
-          </RequireAuth>
-        )}
-      />
-      <Route
-        path="order/history"
-        element={(
-          <RequireAuth>
-            <OrderHistory />
-          </RequireAuth>
-        )}
-      />
-      <Route
-        path="address"
-        element={(
-          <RequireAuth>
-            <Address />
-          </RequireAuth>
-        )}
-      />
-      <Route
-        path="settings"
-        element={(
-          <RequireAuth>
-            <Settings />
-          </RequireAuth>
-        )}
-      />
-    </Route>
+  <>
+    <AdminRedirect />
+    <Routes>
+      <Route element={<BuyerShell />}>
+        <Route index element={<Home />} />
+        <Route path="products" element={<Products />} />
+        <Route path="search" element={<Search />} />
+        <Route
+          path="wishlist"
+          element={(
+            <RequireAuth>
+              <Wishlist />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="cart"
+          element={(
+            <RequireAuth>
+              <Cart />
+            </RequireAuth>
+          )}
+        />
+        <Route path="product/:productId" element={<ProductDetail />} />
+        <Route
+          path="checkout"
+          element={(
+            <RequireAuth>
+              <Checkout />
+            </RequireAuth>
+          )}
+        />
+        <Route path="order/success" element={<OrderSuccess />} />
+        <Route path="auth" element={<Auth />} />
+        <Route
+          path="profile"
+          element={(
+            <RequireAuth>
+              <Profile />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="order/history"
+          element={(
+            <RequireAuth>
+              <OrderHistory />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="address"
+          element={(
+            <RequireAuth>
+              <Address />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="settings"
+          element={(
+            <RequireAuth>
+              <Settings />
+            </RequireAuth>
+          )}
+        />
+      </Route>
 
-    <Route
-      path="admin"
-      element={(
-        <RequireAdmin>
-          <AdminShell />
-        </RequireAdmin>
-      )}
-    >
-      <Route index element={<Navigate to="dashboard" replace />} />
-      <Route path="dashboard" element={<Dashboard />} />
-      <Route path="orders" element={<OrderManagement />} />
-      <Route path="products" element={<ProductManagement />} />
-      <Route path="customers" element={<CustomerManagement />} />
-      <Route path="promotions" element={<Promotions />} />
-      <Route path="partners" element={<Partners />} />
-    </Route>
+      <Route
+        path="admin"
+        element={(
+          <RequireAdmin>
+            <AdminShell />
+          </RequireAdmin>
+        )}
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="orders" element={<OrderManagement />} />
+        <Route path="products" element={<ProductManagement />} />
+        <Route path="customers" element={<CustomerManagement />} />
+        <Route path="promotions" element={<Promotions />} />
+        <Route path="partners" element={<Partners />} />
+      </Route>
 
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </>
 );
 
 export default App;
