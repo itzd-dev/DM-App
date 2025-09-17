@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../contexts/AppContext';
+import OrderManagementSkeleton from '../components/OrderManagementSkeleton';
 
 const Admin = () => {
-  const { logout, orders, updateOrderStatus, formatRupiah, refetchOrders, setAdminPage, showToast } = useAppContext();
+  const { logout, orders, updateOrderStatus, formatRupiah, refetchOrders, setAdminPage, showToast, ordersLoading, updatingOrderId } = useAppContext();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('Semua');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleOrderClick = (order) => {
     setSelectedOrder(order);
@@ -13,10 +15,10 @@ const Admin = () => {
   };
 
   const handleStatusChange = async (newStatus) => {
+    setIsUpdating(true);
     try {
       await updateOrderStatus(selectedOrder.id, newStatus);
       await refetchOrders();
-      // Force rerender this view (optional safety)
       if (setAdminPage) setAdminPage('orders');
       if (showToast) showToast('Status pesanan diperbarui.');
     } catch (_) {
@@ -24,16 +26,12 @@ const Admin = () => {
     } finally {
       setIsModalOpen(false);
       setSelectedOrder(null);
+      setIsUpdating(false);
     }
   };
 
-  // Sync with API on mount and poll periodically for fresh data
   useEffect(() => {
-    let isMounted = true;
-    const sync = async () => { try { await refetchOrders(); } catch (_) {} };
-    sync();
-    const timer = setInterval(() => { if (isMounted) sync(); }, 5000);
-    return () => { isMounted = false; clearInterval(timer); };
+    refetchOrders();
   }, [refetchOrders]);
 
   const getStatusClass = (status) => {
@@ -67,7 +65,6 @@ const Admin = () => {
         <button onClick={logout} className="text-sm font-semibold text-red-500">Logout</button>
       </div>
 
-      {/* Filter chips (horizontal scroll on mobile) */}
       <div className="sticky top-16 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-10 rounded-md border border-brand-subtle p-2 mb-3 overflow-x-auto no-scrollbar">
         <div className="flex gap-2 min-w-max">
           {chips.map(c => (
@@ -78,25 +75,30 @@ const Admin = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-3">
-        <h3 className="text-lg font-semibold text-brand-text mb-3">Daftar Orderan</h3>
-        <div className="space-y-2">
-          {filteredOrders.map(order => (
-            <div key={order.id} onClick={() => handleOrderClick(order)} className="border border-brand-subtle rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg">
-              <div>
-                <p className="font-bold text-brand-text">{order.id}</p>
-                <p className="text-xs text-brand-text-light">{order.customer}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-brand-primary">{formatRupiah(order.total)}</p>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusClass(order.status)}`}>
-                  {order.status}
-                </span>
-              </div>
-            </div>
-          ))}
+      {ordersLoading ? <OrderManagementSkeleton /> : (
+        <div className="bg-white rounded-lg shadow-md p-3">
+          <h3 className="text-lg font-semibold text-brand-text mb-3">Daftar Orderan</h3>
+          <div className="space-y-2">
+            {filteredOrders.map(order => {
+              const isUpdatingOrder = updatingOrderId === order.id;
+              return (
+                <div key={order.id} onClick={() => handleOrderClick(order)} className={`border border-brand-subtle rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg ${isUpdatingOrder ? 'opacity-50 animate-pulse' : ''}`}>
+                  <div>
+                    <p className="font-bold text-brand-text">{order.id}</p>
+                    <p className="text-xs text-brand-text-light">{order.customer}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-brand-primary">{formatRupiah(order.total)}</p>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusClass(order.status)}`}>
+                      {isUpdatingOrder ? 'Menyimpan...' : order.status}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
@@ -120,10 +122,10 @@ const Admin = () => {
 
             <h4 className="text-md font-semibold text-brand-text mb-3">Ubah Status Pesanan</h4>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <button onClick={() => handleStatusChange('Diproses')} className="bg-blue-500 text-white px-4 h-11 rounded-lg text-sm">Diproses</button>
-              <button onClick={() => handleStatusChange('Dikirim')} className="bg-indigo-500 text-white px-4 h-11 rounded-lg text-sm">Dikirim</button>
-              <button onClick={() => handleStatusChange('Selesai')} className="bg-green-500 text-white px-4 h-11 rounded-lg text-sm">Selesai</button>
-              <button onClick={() => handleStatusChange('Dibatalkan')} className="bg-red-500 text-white px-4 h-11 rounded-lg text-sm">Dibatalkan</button>
+              <button onClick={() => handleStatusChange('Diproses')} className="bg-blue-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Diproses'}</button>
+              <button onClick={() => handleStatusChange('Dikirim')} className="bg-indigo-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Dikirim'}</button>
+              <button onClick={() => handleStatusChange('Selesai')} className="bg-green-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Selesai'}</button>
+              <button onClick={() => handleStatusChange('Dibatalkan')} className="bg-red-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Dibatalkan'}</button>
             </div>
 
             <button onClick={() => setIsModalOpen(false)} className="w-full mt-4 text-center text-gray-500 text-sm">Tutup</button>

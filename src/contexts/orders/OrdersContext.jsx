@@ -28,9 +28,12 @@ export const OrdersProvider = ({ children }) => {
   const { navigateTo } = useNavigation();
 
   const [orders, setOrders] = useState(DEFAULT_ORDERS);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [lastOrderDetails, setLastOrderDetails] = useState({});
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const refetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
     try {
       const resp = await fetch('/api/orders');
       if (resp.ok) {
@@ -39,10 +42,13 @@ export const OrdersProvider = ({ children }) => {
       }
     } catch (error) {
       console.warn('[orders] refetchOrders failed', error);
+    } finally {
+      setOrdersLoading(false);
     }
   }, []);
 
   const updateOrderStatus = useCallback(async (orderId, newStatus) => {
+    setUpdatingOrderId(orderId);
     const prevSnapshot = orders;
     setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)));
     try {
@@ -65,6 +71,8 @@ export const OrdersProvider = ({ children }) => {
       setOrders(prevSnapshot);
       showToast('Gagal update status. Perubahan dibatalkan.');
       throw error;
+    } finally {
+      setUpdatingOrderId(null);
     }
   }, [orders, refetchOrders, showToast]);
 
@@ -207,8 +215,10 @@ export const OrdersProvider = ({ children }) => {
   const value = useMemo(() => ({
     orders,
     setOrders,
+    ordersLoading,
     lastOrderDetails,
     setLastOrderDetails,
+    updatingOrderId,
     refetchOrders,
     updateOrderStatus,
     placeOrder,
@@ -216,7 +226,9 @@ export const OrdersProvider = ({ children }) => {
     exportOrdersToCsv,
   }), [
     orders,
+    ordersLoading,
     lastOrderDetails,
+    updatingOrderId,
     refetchOrders,
     updateOrderStatus,
     placeOrder,
