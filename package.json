@@ -1,0 +1,42 @@
+{
+  "name": "dapurmerifa",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "dev:vercel": "vercel dev",
+    "env:ls": "vercel env ls",
+    "env:add": "vercel env add",
+    "env:rm": "vercel env rm",
+    "env:pull": "vercel env pull .env.local",
+    "env:pull:dev": "vercel env pull --environment=development .env.development.local",
+    "env:pull:preview": "vercel env pull --environment=preview .env.preview.local",
+    "env:pull:prod": "vercel env pull --environment=production .env.production.local"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "@vercel/analytics": "^1.5.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vite": "^7.1.2",
+    "vite-plugin-pwa": "^1.0.3"
+  }
+}

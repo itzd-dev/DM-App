@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "SF UI Display", sans-serif;
+  background-color: #fbf9f6; /* Warm off-white background */
+  font-size: 16px;
+}
+
+@layer components {
+  .mobile-container {
+    @apply max-w-[375px] mx-auto bg-white shadow-[0_0_20px_rgba(0,0,0,0.05)] min-h-screen overflow-x-hidden;
+  }
+  .bottom-nav {
+    @apply shadow-[0_-2px_10px_rgba(0,0,0,0.1)];
+  }
+  .badge {
+    @apply absolute -top-1 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-brand-accent text-white text-[9px] font-semibold border border-white;
+  }
+  .product-badge {
+    @apply text-[10px] py-0.5 px-2 rounded-full font-semibold text-white;
+  }
+  .page-section {
+    @apply transition-opacity duration-300 ease-in-out;
+  }
+  .page-section.hidden {
+    @apply opacity-0 pointer-events-none absolute w-full;
+  }
+  .payment-method.selected {
+    @apply border-brand-primary bg-brand-bg;
+  }
+  .skeleton {
+    @apply bg-gray-200 rounded-lg animate-pulse;
+  }
+  .auth-tab.active {
+    @apply border-brand-primary text-[#3d2c1d];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #eae0d5;
+}
+::-webkit-scrollbar-thumb {
+  background: #634832;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4a3726;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
