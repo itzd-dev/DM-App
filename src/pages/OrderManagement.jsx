@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import OrderManagementSkeleton from '../components/OrderManagementSkeleton';
+import Button from '../components/ui/Button';
 
 const Admin = () => {
   const { logout, orders, updateOrderStatus, formatRupiah, refetchOrders, setAdminPage, showToast, ordersLoading, updatingOrderId } = useAppContext();
@@ -61,8 +62,8 @@ const Admin = () => {
   return (
     <section id="page-admin-pos" className="page-section p-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-brand-primary">Admin - Manajemen Order</h2>
-        <button onClick={logout} className="text-sm font-semibold text-red-500">Logout</button>
+        <h2 className="text-xl font-bold text-brand-primary dark:text-amber-200">Admin - Manajemen Order</h2>
+        <Button onClick={logout} variant="danger" className="text-sm px-3 py-1.5">Logout</Button>
       </div>
 
       <div className="sticky top-16 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-10 rounded-md border border-brand-subtle p-2 mb-3 overflow-x-auto no-scrollbar">
@@ -76,13 +77,19 @@ const Admin = () => {
       </div>
 
       {ordersLoading ? <OrderManagementSkeleton /> : (
-        <div className="bg-white rounded-lg shadow-md p-3">
+        <div className="bg-white dark:bg-[#1f1812] rounded-lg shadow-md p-3 border border-transparent dark:border-white/10">
           <h3 className="text-lg font-semibold text-brand-text mb-3">Daftar Orderan</h3>
+          {filteredOrders.length === 0 ? (
+            <div className="text-center py-12 text-brand-text-light">
+              <p className="font-medium">Belum ada order dengan filter ini.</p>
+              <p className="text-sm mt-1">Order baru akan muncul di sini setelah pelanggan melakukan checkout.</p>
+            </div>
+          ) : (
           <div className="space-y-2">
             {filteredOrders.map(order => {
               const isUpdatingOrder = updatingOrderId === order.id;
               return (
-                <div key={order.id} onClick={() => handleOrderClick(order)} className={`border border-brand-subtle rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg ${isUpdatingOrder ? 'opacity-50 animate-pulse' : ''}`}>
+                <div key={order.id} onClick={() => handleOrderClick(order)} className={`border border-brand-subtle dark:border-white/10 rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg dark:hover:bg-[#241b15] transition-transform ${isUpdatingOrder ? 'opacity-50 animate-pulse' : 'hover:-translate-y-1'}`}>
                   <div>
                     <p className="font-bold text-brand-text">{order.id}</p>
                     <p className="text-xs text-brand-text-light">{order.customer}</p>
@@ -97,6 +104,7 @@ const Admin = () => {
               )
             })}
           </div>
+          )}
         </div>
       )}
 
@@ -122,13 +130,21 @@ const Admin = () => {
 
             <h4 className="text-md font-semibold text-brand-text mb-3">Ubah Status Pesanan</h4>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <button onClick={() => handleStatusChange('Diproses')} className="bg-blue-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Diproses'}</button>
-              <button onClick={() => handleStatusChange('Dikirim')} className="bg-indigo-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Dikirim'}</button>
-              <button onClick={() => handleStatusChange('Selesai')} className="bg-green-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Selesai'}</button>
-              <button onClick={() => handleStatusChange('Dibatalkan')} className="bg-red-500 text-white px-4 h-11 rounded-lg text-sm disabled:bg-gray-400" disabled={isUpdating}>{isUpdating ? 'Menyimpan...' : 'Dibatalkan'}</button>
+              <Button onClick={() => handleStatusChange('Diproses')} variant="info" className="h-11" disabled={isUpdating}>
+                {isUpdating ? 'Menyimpan…' : 'Diproses'}
+              </Button>
+              <Button onClick={() => handleStatusChange('Dikirim')} variant="purple" className="h-11" disabled={isUpdating}>
+                {isUpdating ? 'Menyimpan…' : 'Dikirim'}
+              </Button>
+              <Button onClick={() => handleStatusChange('Selesai')} variant="success" className="h-11" disabled={isUpdating}>
+                {isUpdating ? 'Menyimpan…' : 'Selesai'}
+              </Button>
+              <Button onClick={() => handleStatusChange('Dibatalkan')} variant="danger" className="h-11" disabled={isUpdating}>
+                {isUpdating ? 'Menyimpan…' : 'Dibatalkan'}
+              </Button>
             </div>
 
-            <button onClick={() => setIsModalOpen(false)} className="w-full mt-4 text-center text-gray-500 text-sm">Tutup</button>
+            <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="w-full mt-4">Tutup</Button>
           </div>
         </div>
       )}

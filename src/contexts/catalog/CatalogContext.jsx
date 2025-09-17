@@ -29,14 +29,9 @@ export const CatalogProvider = ({ children }) => {
   const { showToast } = useUi();
 
   const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentCategoryFilter, setCurrentCategoryFilter] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const selectProduct = useCallback((productId) => {
     setSelectedProductId(productId);
@@ -48,6 +43,7 @@ export const CatalogProvider = ({ children }) => {
   }, [products, selectedProductId]);
 
   const refetchProducts = useCallback(async () => {
+    setIsLoading(true);
     try {
       const resp = await fetch('/api/products');
       if (resp.ok) {
@@ -60,8 +56,10 @@ export const CatalogProvider = ({ children }) => {
     } catch (error) {
       console.warn('[catalog] refetchProducts API fallback', error);
       showToast('Gagal memuat daftar produk.');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
     }
-    setProducts([]);
   }, [showToast]);
 
   useEffect(() => {

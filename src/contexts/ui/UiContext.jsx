@@ -1,8 +1,27 @@
-import { createContext, useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 const UiContext = createContext(null);
 
+const getInitialTheme = () => {
+  if (typeof window === 'undefined') return 'light';
+  try {
+    const stored = window.localStorage.getItem('theme');
+    if (stored === 'dark' || stored === 'light') return stored;
+  } catch (_) {}
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 export const UiProvider = ({ children }) => {
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    try {
+      window.localStorage.setItem('theme', theme);
+    } catch (_) {}
+  }, [theme]);
+
   const showToast = useCallback((message) => {
     if (!message) return;
     const existingToast = document.querySelector('.toast-notification');
@@ -14,8 +33,18 @@ export const UiProvider = ({ children }) => {
     setTimeout(() => toast.remove(), 2000);
   }, []);
 
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  const value = useMemo(() => ({
+    showToast,
+    theme,
+    toggleTheme,
+  }), [showToast, theme, toggleTheme]);
+
   return (
-    <UiContext.Provider value={{ showToast }}>
+    <UiContext.Provider value={value}>
       {children}
     </UiContext.Provider>
   );

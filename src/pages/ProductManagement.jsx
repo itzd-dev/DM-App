@@ -1,8 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../contexts/AppContext';
+import ProductManagementSkeleton from '../components/ProductManagementSkeleton';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Textarea from '../components/ui/Textarea';
 
 const ProductManagement = () => {
-  const { products, partners, formatRupiah, addProduct, editProduct, deleteProduct, toggleProductAvailability, updateProductStock } = useAppContext();
+  const {
+    products,
+    partners,
+    formatRupiah,
+    addProduct,
+    editProduct,
+    deleteProduct,
+    toggleProductAvailability,
+    updateProductStock,
+    isLoading,
+  } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({});
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
@@ -10,6 +24,8 @@ const ProductManagement = () => {
   const [stockToAdd, setStockToAdd] = useState(0);
   const [tempObjectUrl, setTempObjectUrl] = useState(null);
   const [openActionsId, setOpenActionsId] = useState(null);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [isStockSaving, setIsStockSaving] = useState(false);
   const touchStoreRef = useRef({});
 
   const openModal = (product = null) => {
@@ -65,20 +81,30 @@ const ProductManagement = () => {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (formData.id) { // Editing existing product
-      editProduct(formData.id, formData);
-    } else { // Adding new product
-      addProduct(formData);
+    setIsSavingProduct(true);
+    try {
+      if (formData.id) {
+        await editProduct(formData.id, formData);
+      } else {
+        await addProduct(formData);
+      }
+      closeModal();
+    } finally {
+      setIsSavingProduct(false);
     }
-    closeModal();
   };
 
-  const handleAddStock = () => {
+  const handleAddStock = async () => {
     if (selectedProductId && stockToAdd > 0) {
-      updateProductStock(selectedProductId, stockToAdd);
-      closeStockModal();
+      setIsStockSaving(true);
+      try {
+        await updateProductStock(selectedProductId, stockToAdd);
+        closeStockModal();
+      } finally {
+        setIsStockSaving(false);
+      }
     }
   };
 
@@ -91,18 +117,30 @@ const ProductManagement = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-brand-primary">Manajemen Produk</h2>
-        <button onClick={() => openModal()} className="bg-brand-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-90 transition text-sm">
+        <h2 className="text-2xl font-bold text-brand-primary dark:text-amber-200">Manajemen Produk</h2>
+        <Button
+          onClick={() => openModal()}
+          disabled={isSavingProduct || isStockSaving}
+          className="text-sm"
+        >
           + Tambah Produk
-        </button>
+        </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-4">
-        <div className="space-y-3">
-          {products.map((product, index) => (
+      <div className="bg-white dark:bg-[#1f1812] border border-transparent dark:border-white/10 rounded-lg shadow-md p-4">
+        {isLoading ? (
+          <ProductManagementSkeleton />
+        ) : products.length === 0 ? (
+          <div className="text-center py-12 text-brand-text-light">
+            <p className="font-medium">Belum ada produk yang tercatat.</p>
+            <p className="text-sm mt-1">Gunakan tombol “+ Tambah Produk” untuk menambahkan data baru.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+          {products.map((product) => (
             <div
               key={product.id}
-              className="border border-brand-subtle rounded-lg p-3"
+              className="border border-brand-subtle dark:border-white/10 rounded-lg p-3 bg-white dark:bg-[#241b15] transition-transform hover:-translate-y-1"
               onTouchStart={(e) => {
                 const t = e.touches && e.touches[0];
                 if (!t) return;
@@ -141,16 +179,27 @@ const ProductManagement = () => {
               </div>
               {/* Actions (swipe to reveal on mobile; always visible on desktop) */}
               <div className={`${openActionsId === product.id ? 'grid' : 'hidden'} grid-cols-2 gap-2 mt-3`}>
-                <button onClick={(e) => { e.stopPropagation(); openModal(product); }} className="bg-blue-500 text-white h-9 rounded-lg text-xs">Edit</button>
-                <button onClick={(e) => { e.stopPropagation(); openStockModal(product.id); }} className="bg-purple-500 text-white h-9 rounded-lg text-xs">Tambah Stok</button>
-                <button onClick={(e) => { e.stopPropagation(); toggleProductAvailability(product.id); }} className={`${product.isAvailable ? 'bg-orange-500' : 'bg-green-500'} text-white h-9 rounded-lg text-xs`}>
+                <Button onClick={(e) => { e.stopPropagation(); openModal(product); }} variant="info" className="h-9 text-xs px-3">
+                  Edit
+                </Button>
+                <Button onClick={(e) => { e.stopPropagation(); openStockModal(product.id); }} variant="purple" className="h-9 text-xs px-3">
+                  Tambah Stok
+                </Button>
+                <Button
+                  onClick={(e) => { e.stopPropagation(); toggleProductAvailability(product.id); }}
+                  variant={product.isAvailable ? 'warning' : 'success'}
+                  className="h-9 text-xs px-3"
+                >
                   {product.isAvailable ? 'Stok Habis' : 'Tersedia'}
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} className="bg-red-500 text-white h-9 rounded-lg text-xs">Hapus</button>
+                </Button>
+                <Button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} variant="danger" className="h-9 text-xs px-3">
+                  Hapus
+                </Button>
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
@@ -179,7 +228,7 @@ const ProductManagement = () => {
                 <div className="md:col-span-2 space-y-4">
                   <div>
                     <label className="text-sm font-medium text-brand-text-light">Nama Produk</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg" required />
+                    <Input type="text" name="name" value={formData.name} onChange={handleInputChange} required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -188,11 +237,11 @@ const ProductManagement = () => {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-brand-text-light">Harga</label>
-                      <input type="number" name="price" value={formData.price} onChange={handleInputChange} className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg" required />
+                      <Input type="number" name="price" value={formData.price} onChange={handleInputChange} required />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-brand-text-light">Stok Saat Ini</label> {/* Stock input */}
-                      <input type="number" name="currentStock" value={formData.currentStock} onChange={handleInputChange} className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg" required />
+                      <Input type="number" name="currentStock" value={formData.currentStock} onChange={handleInputChange} required />
                     </div>
                   </div>
                   <div>
@@ -201,13 +250,25 @@ const ProductManagement = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-brand-text-light">Deskripsi</label>
-                    <textarea name="description" rows="3" value={formData.description} onChange={handleInputChange} className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg"></textarea>
+                    <Textarea name="description" rows="3" value={formData.description} onChange={handleInputChange} />
                   </div>
                 </div>
               </div>
               <div className="flex justify-end space-x-3 pt-4 border-t border-brand-subtle mt-6">
-                <button type="button" onClick={closeModal} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button>
-                <button type="submit" className="bg-brand-primary text-white font-bold py-2 px-4 rounded-lg">Simpan</button>
+                <Button
+                  type="button"
+                  onClick={closeModal}
+                  variant="secondary"
+                  disabled={isSavingProduct}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSavingProduct}
+                >
+                  {isSavingProduct ? 'Menyimpan…' : 'Simpan'}
+                </Button>
               </div>
             </form>
           </div>
@@ -221,18 +282,30 @@ const ProductManagement = () => {
             <h3 className="text-lg font-bold text-brand-primary mb-4">Tambah Stok Produk</h3>
             <div className="mb-4">
               <label className="text-sm font-medium text-brand-text-light">Jumlah Stok yang Ditambahkan</label>
-              <input
+              <Input
                 type="number"
                 value={stockToAdd}
                 onChange={handleStockInputChange}
-                className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg"
                 min="1"
                 required
               />
             </div>
             <div className="flex justify-end space-x-3">
-              <button type="button" onClick={closeStockModal} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button>
-              <button type="button" onClick={handleAddStock} className="bg-brand-primary text-white font-bold py-2 px-4 rounded-lg">Tambah</button>
+              <Button
+                type="button"
+                onClick={closeStockModal}
+                variant="secondary"
+                disabled={isStockSaving}
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                onClick={handleAddStock}
+                disabled={isStockSaving}
+              >
+                {isStockSaving ? 'Menyimpan…' : 'Tambah'}
+              </Button>
             </div>
           </div>
         </div>

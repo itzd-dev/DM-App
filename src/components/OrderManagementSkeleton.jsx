@@ -1,9 +1,9 @@
 
 const OrderManagementSkeleton = () => (
   <div className="overflow-x-auto">
-    <table className="min-w-full bg-white border border-gray-200">
+    <table className="min-w-full bg-white dark:bg-[#1f1812] border border-gray-200 dark:border-white/10">
       <thead>
-        <tr className="bg-gray-100">
+        <tr className="bg-gray-100 dark:bg-[#2a211a]">
           <th className="py-2 px-4 border-b">ID Order</th>
           <th className="py-2 px-4 border-b">Customer</th>
           <th className="py-2 px-4 border-b">Total</th>

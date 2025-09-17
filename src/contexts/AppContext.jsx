@@ -79,6 +79,8 @@ export const LegacyAppProvider = ({ children }) => {
     // Orders
     orders: orders.orders,
     setOrders: orders.setOrders,
+    ordersLoading: orders.ordersLoading,
+    updatingOrderId: orders.updatingOrderId,
     lastOrderDetails: orders.lastOrderDetails,
     setLastOrderDetails: orders.setLastOrderDetails,
     refetchOrders: orders.refetchOrders,
@@ -116,6 +118,8 @@ export const LegacyAppProvider = ({ children }) => {
 
     // Utilities
     showToast: ui.showToast,
+    theme: ui.theme,
+    toggleTheme: ui.toggleTheme,
     formatRupiah,
   }), [
     auth,

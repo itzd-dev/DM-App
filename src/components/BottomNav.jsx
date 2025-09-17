@@ -25,12 +25,12 @@ const BottomNav = () => {
 
 
   return (
-    <nav className="bottom-nav fixed bottom-0 left-0 right-0 bg-white flex justify-around max-w-[375px] mx-auto z-10 border-t border-brand-subtle">
+    <nav className="bottom-nav fixed bottom-0 left-0 right-0 bg-white dark:bg-[#2a211a] flex justify-around max-w-[375px] mx-auto z-10 border-t border-brand-subtle dark:border-white/10 md:hidden">
       {navItems.map(item => (
         <button
           key={item.id}
           onClick={item.onClick}
-          className={`nav-button flex-1 py-3 text-center ${activePage === item.id ? 'text-brand-primary' : 'text-brand-text-light'}`}>
+          className={`nav-button flex-1 py-3 text-center transition-colors ${activePage === item.id ? 'text-brand-primary dark:text-amber-200' : 'text-brand-text-light dark:text-slate-300 hover:text-brand-primary'}`}>
           {item.id === 'cart' ? (
             <div className="relative inline-block">
               <i className={`fas ${item.icon} text-lg`}></i>
