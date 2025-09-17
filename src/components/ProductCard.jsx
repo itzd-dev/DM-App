@@ -17,7 +17,7 @@ const ProductCard = ({ product }) => {
   }
 
   return (
-    <div className="border border-brand-subtle dark:border-white/10 rounded-lg overflow-hidden shadow-sm bg-white dark:bg-[#2a211a] flex flex-col transform transition-transform duration-200 hover:-translate-y-1">
+    <div className="border border-brand-subtle rounded-lg overflow-hidden shadow-sm bg-white flex flex-col transform transition-transform duration-200 hover:-translate-y-1">
       <div className="relative">
         <img src={product.image} alt={product.name} className="w-full h-32 object-cover cursor-pointer" onClick={showProductDetail} />
         <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1">
@@ -37,7 +37,7 @@ const ProductCard = ({ product }) => {
       </div>
       <div className="p-3 flex-grow flex flex-col cursor-pointer" onClick={showProductDetail}>
         <div className="flex justify-between items-start">
-          <h4 className="font-semibold text-sm text-brand-text dark:text-slate-100 truncate pr-2">{product.name}</h4>
+          <h4 className="font-semibold text-sm text-brand-text truncate pr-2">{product.name}</h4>
           <div className="flex items-center space-x-1 flex-shrink-0">
             <i className="fas fa-star text-yellow-400 text-xs"></i>
             <span className="text-xs font-bold text-brand-text-light">{product.rating.toFixed(1)}</span>
@@ -45,8 +45,8 @@ const ProductCard = ({ product }) => {
         </div>
         <div className="flex-grow"></div>
         <div className="flex justify-between items-center mt-2 mb-2">
-          <p className="text-sm text-brand-primary dark:text-amber-200 font-bold">{formatRupiah(product.price)}</p>
-          <div className="flex items-center space-x-1 text-brand-text-light dark:text-slate-300">
+          <p className="text-sm text-brand-primary font-bold">{formatRupiah(product.price)}</p>
+          <div className="flex items-center space-x-1 text-brand-text-light">
             <i className="fas fa-fire-alt text-orange-400 text-xs"></i>
             <span className="text-xs font-bold">{soldText}</span>
           </div>
@@ -56,7 +56,7 @@ const ProductCard = ({ product }) => {
         <button 
           onClick={() => addToCart(product.id, 1)}
           disabled={!product.isAvailable}
-          className={`w-full text-white text-xs font-semibold py-2 rounded-lg transition-colors ${product.isAvailable ? 'bg-brand-primary hover:bg-opacity-90 dark:bg-amber-500 dark:hover:bg-amber-400' : 'bg-gray-400 cursor-not-allowed'}`}>
+          className={`w-full text-white text-xs font-semibold py-2 rounded-lg transition-colors ${product.isAvailable ? 'bg-brand-primary hover:bg-opacity-90' : 'bg-gray-400 cursor-not-allowed'}`}>
           <i className="fas fa-cart-plus mr-1"></i> {product.isAvailable ? 'Tambah' : 'Stok Habis'}
         </button>
       </div>
