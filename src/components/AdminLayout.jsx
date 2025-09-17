@@ -18,7 +18,7 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className="flex flex-col h-screen mobile-container pb-16 dark:text-slate-100">
-      <header className="sticky top-0 bg-brand-primary dark:bg-[#2a211a] text-white p-4 flex justify-between items-center shadow-md z-20 flex-shrink-0">
+      <header className="sticky top-0 bg-brand-primary dark:bg-[#241a12] text-white p-4 flex justify-between items-center shadow-md z-20 flex-shrink-0">
         <div className="flex items-center space-x-4">
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white">
             <i className="fas fa-bars"></i>
@@ -40,7 +40,7 @@ const AdminLayout = ({ children }) => {
       </header>
       <div className="flex flex-grow overflow-hidden">
         <aside className="hidden"></aside>
-        <main className="flex-grow p-4 overflow-y-auto bg-brand-bg dark:bg-[#211a15] transition-colors">
+        <main className="flex-grow p-4 overflow-y-auto bg-brand-bg dark:bg-[#16100c] transition-colors">
           {children}
         </main>
       </div>

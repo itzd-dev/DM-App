@@ -101,7 +101,7 @@ const Header = () => {
   return (
     <header
       id="header"
-      className="sticky top-0 bg-white dark:bg-[#2a211a] z-20 p-4 flex justify-between items-center shadow-md transition-all duration-300"
+      className="sticky top-0 bg-white dark:bg-[#20160f] z-20 p-4 flex justify-between items-center shadow-md transition-all duration-300"
     >
       {renderHeaderContent()}
     </header>

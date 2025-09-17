@@ -5,12 +5,12 @@
 body {
   font-family: "SF UI Display", sans-serif;
   font-size: 16px;
-  @apply bg-brand-bg text-brand-text transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
+  @apply bg-brand-bg text-brand-text transition-colors duration-300 dark:bg-[#111111] dark:text-slate-100;
 }
 
 @layer components {
   .mobile-container {
-    @apply max-w-[375px] mx-auto bg-white shadow-[0_0_20px_rgba(0,0,0,0.05)] min-h-screen overflow-x-hidden dark:bg-[#1f1914];
+    @apply max-w-[375px] mx-auto bg-white shadow-[0_0_20px_rgba(0,0,0,0.05)] min-h-screen overflow-x-hidden dark:bg-[#18130f];
   }
   .bottom-nav {
     @apply shadow-[0_-2px_10px_rgba(0,0,0,0.1)];
