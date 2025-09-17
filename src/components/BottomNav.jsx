@@ -25,7 +25,7 @@ const BottomNav = () => {
 
 
   return (
-    <nav className="bottom-nav fixed bottom-0 left-0 right-0 bg-white flex justify-around max-w-[375px] mx-auto z-10 border-t border-brand-subtle md:hidden">
+    <nav className="bottom-nav fixed bottom-0 left-0 right-0 bg-white flex justify-around max-w-[480px] w-full mx-auto z-10 border-t border-brand-subtle">
       {navItems.map(item => (
         <button
           key={item.id}
