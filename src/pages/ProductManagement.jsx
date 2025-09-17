@@ -116,18 +116,18 @@ const ProductManagement = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-brand-primary dark:text-amber-200">Manajemen Produk</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-brand-primary">Manajemen Produk</h2>
         <Button
           onClick={() => openModal()}
           disabled={isSavingProduct || isStockSaving}
-          className="text-sm"
+          className="px-3 py-2 text-sm"
         >
           + Tambah Produk
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-[#1f1812] border border-transparent dark:border-white/10 rounded-lg shadow-md p-4">
+      <div className="bg-white border border-brand-subtle rounded-lg shadow-md p-4">
         {isLoading ? (
           <ProductManagementSkeleton />
         ) : products.length === 0 ? (
@@ -140,7 +140,7 @@ const ProductManagement = () => {
           {products.map((product) => (
             <div
               key={product.id}
-              className="border border-brand-subtle dark:border-white/10 rounded-lg p-3 bg-white dark:bg-[#241b15] transition-transform hover:-translate-y-1"
+              className="border border-brand-subtle rounded-lg p-3 bg-white transition-transform hover:-translate-y-1"
               onTouchStart={(e) => {
                 const t = e.touches && e.touches[0];
                 if (!t) return;

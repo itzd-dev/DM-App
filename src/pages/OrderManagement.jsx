@@ -77,7 +77,7 @@ const Admin = () => {
       </div>
 
       {ordersLoading ? <OrderManagementSkeleton /> : (
-        <div className="bg-white dark:bg-[#1f1812] rounded-lg shadow-md p-3 border border-transparent dark:border-white/10">
+        <div className="bg-white rounded-lg shadow-md p-3 border border-brand-subtle">
           <h3 className="text-lg font-semibold text-brand-text mb-3">Daftar Orderan</h3>
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12 text-brand-text-light">
@@ -89,7 +89,7 @@ const Admin = () => {
             {filteredOrders.map(order => {
               const isUpdatingOrder = updatingOrderId === order.id;
               return (
-                <div key={order.id} onClick={() => handleOrderClick(order)} className={`border border-brand-subtle dark:border-white/10 rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg dark:hover:bg-[#241b15] transition-transform ${isUpdatingOrder ? 'opacity-50 animate-pulse' : 'hover:-translate-y-1'}`}>
+                <div key={order.id} onClick={() => handleOrderClick(order)} className={`border border-brand-subtle rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-brand-bg transition-transform ${isUpdatingOrder ? 'opacity-50 animate-pulse' : 'hover:-translate-y-1'}`}>
                   <div>
                     <p className="font-bold text-brand-text">{order.id}</p>
                     <p className="text-xs text-brand-text-light">{order.customer}</p>
