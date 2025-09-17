@@ -2,7 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Auth = () => {
-  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail, navigateTo, isLoggedIn, userRole, setAdminPage } = useAppContext();
+  const {
+    login,
+    loginWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    navigateTo,
+    isLoggedIn,
+    userRole,
+    setAdminPage,
+    authReady,
+  } = useAppContext();
   const [authTab, setAuthTab] = useState('login');
   const [loginEmail, setLoginEmail] = useState('pengguna@email.com');
   const [registerName, setRegisterName] = useState('');
@@ -20,7 +30,7 @@ const Auth = () => {
 
   // Jika sesi sudah aktif (misal sesaat setelah login), arahkan ke profil
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!authReady || !isLoggedIn) return;
     if (!userRole) return; // tunggu role terbaca
     if (userRole === 'admin') {
       setAdminPage?.('dashboard', { replace: true });
@@ -28,7 +38,7 @@ const Auth = () => {
     } else {
       navigateTo('profile');
     }
-  }, [isLoggedIn, userRole, navigateTo, setAdminPage]);
+  }, [authReady, isLoggedIn, userRole, navigateTo, setAdminPage]);
 
   return (
     <section id="page-auth" className="page-section p-8">

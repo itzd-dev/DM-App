@@ -25,6 +25,7 @@ export const LegacyAppProvider = ({ children }) => {
 
   const value = useMemo(() => ({
     // Auth
+    authReady: auth.authReady,
     isLoggedIn: auth.isLoggedIn,
     loggedInUser: auth.loggedInUser,
     userRole: auth.userRole,
