@@ -27,7 +27,7 @@ export const OrdersProvider = ({ children }) => {
   const { setCustomerPoints, refetchLoyalty } = useUserData();
   const { navigateTo } = useNavigation();
 
-  const [orders, setOrders] = useState(DEFAULT_ORDERS);
+  const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [lastOrderDetails, setLastOrderDetails] = useState({});
   const [updatingOrderId, setUpdatingOrderId] = useState(null);

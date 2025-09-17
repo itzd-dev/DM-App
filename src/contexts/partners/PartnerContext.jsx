@@ -13,7 +13,7 @@ const DEFAULT_PARTNERS = [
 export const PartnerProvider = ({ children }) => {
   const { getAuthHeaders } = useAuth();
   const { showToast } = useUi();
-  const [partners, setPartners] = useState(() => safeLoad(STORAGE_KEY, DEFAULT_PARTNERS));
+  const [partners, setPartners] = useState(() => safeLoad(STORAGE_KEY, []));
 
   useEffect(() => {
     safeSave(STORAGE_KEY, partners);

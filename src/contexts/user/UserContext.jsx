@@ -19,8 +19,8 @@ export const UserProvider = ({ children }) => {
   const { loggedInUser, getAuthHeaders } = useAuth();
   const { showToast } = useUi();
 
-  const [customerPoints, setCustomerPoints] = useState(() => safeLoad('customerPoints', DEFAULT_POINTS));
-  const [customerProfiles, setCustomerProfiles] = useState(() => safeLoad('customerProfiles', DEFAULT_PROFILES));
+  const [customerPoints, setCustomerPoints] = useState(() => safeLoad('customerPoints', {}));
+  const [customerProfiles, setCustomerProfiles] = useState(() => safeLoad('customerProfiles', {}));
   const [initialCart, setInitialCart] = useState([]);
   const [initialWishlist, setInitialWishlist] = useState([]);
   const [userStateReady, setUserStateReady] = useState(false);

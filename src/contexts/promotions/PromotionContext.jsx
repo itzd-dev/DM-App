@@ -7,10 +7,7 @@ const PromotionContext = createContext(null);
 export const PromotionProvider = ({ children }) => {
   const { getAuthHeaders } = useAuth();
   const { showToast } = useUi();
-  const [promotions, setPromotions] = useState([
-    { code: 'HEMAT10', discount: 0.1, type: 'percentage' },
-    { code: 'DISKON5K', discount: 5000, type: 'fixed' },
-  ]);
+  const [promotions, setPromotions] = useState([]);
 
   const refetchPromotions = useCallback(async () => {
     try {

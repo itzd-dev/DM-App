@@ -29,7 +29,7 @@ export const CatalogProvider = ({ children }) => {
   const { getAuthHeaders } = useAuth();
   const { showToast } = useUi();
 
-  const [products, setProducts] = useState(initialProducts.map(normalizeProduct));
+  const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentCategoryFilter, setCurrentCategoryFilter] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
