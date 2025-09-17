@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { products as initialProducts } from '../../data';
 import { useAuth } from '../auth/AuthContext';
 import { useUi } from '../ui/UiContext';
 
@@ -60,10 +59,10 @@ export const CatalogProvider = ({ children }) => {
       }
     } catch (error) {
       console.warn('[catalog] refetchProducts API fallback', error);
+      showToast('Gagal memuat daftar produk.');
     }
-
-    if (import.meta.env.DEV) return; // in dev keep initial data if API fails
-  }, []);
+    setProducts([]);
+  }, [showToast]);
 
   useEffect(() => {
     refetchProducts();
