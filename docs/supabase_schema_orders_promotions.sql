@@ -129,3 +129,32 @@ do $$ begin
     create policy "Loyalty history: read own" on public.loyalty_history for select using (auth.uid() = user_id);
   end if;
 end $$;
+
+-- Persisted cart/wishlist/profile state per user
+create table if not exists public.user_state (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  cart jsonb default '[]'::jsonb,
+  wishlist jsonb default '[]'::jsonb,
+  profiles jsonb default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_state enable row level security;
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'user_state' and policyname = 'User state: read own'
+  ) then
+    create policy "User state: read own" on public.user_state for select using (auth.uid() = id);
+  end if;
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'user_state' and policyname = 'User state: upsert own'
+  ) then
+    create policy "User state: upsert own" on public.user_state for insert with check (auth.uid() = id);
+  end if;
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'user_state' and policyname = 'User state: update own'
+  ) then
+    create policy "User state: update own" on public.user_state for update using (auth.uid() = id);
+  end if;
+end $$;

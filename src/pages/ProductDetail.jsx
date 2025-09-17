@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
 
 const ProductDetail = () => {
-  const { selectedProduct, formatRupiah, addToCart } = useAppContext();
+  const { selectedProduct, selectProduct, products, formatRupiah, addToCart } = useAppContext();
+  const { productId } = useParams();
   const [quantity, setQuantity] = useState(1);
 
-  if (!selectedProduct) {
+  useEffect(() => {
+    if (productId) {
+      selectProduct(Number(productId));
+    }
+  }, [productId, selectProduct]);
+
+  const product = useMemo(() => {
+    if (selectedProduct) return selectedProduct;
+    if (!productId) return null;
+    return products.find((item) => item.id === Number(productId)) || null;
+  }, [productId, products, selectedProduct]);
+
+  if (!product) {
     return (
       <section className="page-section p-4">
         <p>Produk tidak ditemukan.</p>
@@ -13,7 +27,7 @@ const ProductDetail = () => {
     );
   }
 
-  const { name, price, image, tags, rating, reviewCount, soldCount, description, allergens, reviews, isAvailable } = selectedProduct;
+  const { name, price, image, tags, rating, reviewCount, soldCount, description, allergens, reviews, isAvailable } = product;
 
   const soldText =
     soldCount >= 1000
@@ -31,7 +45,7 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
-    addToCart(selectedProduct.id, quantity);
+    addToCart(product.id, quantity);
   }
 
   return (

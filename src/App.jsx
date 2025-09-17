@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAppContext } from './contexts/AppContext';
 
 // Layouts
@@ -29,71 +30,121 @@ import CustomerManagement from './pages/CustomerManagement';
 import Promotions from './pages/Promotions';
 import Partners from './pages/Partners';
 
-const App = () => {
-  const { currentPage, userRole, adminPage } = useAppContext();
+const BuyerShell = () => (
+  <Layout>
+    <Outlet />
+  </Layout>
+);
 
-  // Admin View
-  if (userRole === 'admin') {
-    const renderAdminPage = () => {
-      switch (adminPage) {
-        case 'dashboard':
-          return <Dashboard />;
-        case 'orders':
-          return <OrderManagement />;
-        case 'products':
-          return <ProductManagement />;
-        case 'customers':
-          return <CustomerManagement />;
-        case 'promotions':
-          return <Promotions />;
-        case 'partners':
-          return <Partners />;
-        default:
-          return <Dashboard />;
-      }
-    };
-    return <AdminLayout>{renderAdminPage()}</AdminLayout>;
+const AdminShell = () => (
+  <AdminLayout>
+    <Outlet />
+  </AdminLayout>
+);
+
+const RequireAuth = ({ children }) => {
+  const { isLoggedIn } = useAppContext();
+  const location = useLocation();
+  if (!isLoggedIn) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
-
-  // Buyer View
-  const renderBuyerPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <Home />;
-      case 'products':
-        return <Products />;
-      case 'search':
-        return <Search />;
-      case 'wishlist':
-        return <Wishlist />;
-      case 'cart':
-        return <Cart />;
-      case 'product-detail':
-        return <ProductDetail />;
-      case 'checkout':
-        return <Checkout />;
-      case 'order-success':
-        return <OrderSuccess />;
-      case 'auth':
-        return <Auth />;
-      case 'profile':
-        return <Profile />;
-      case 'order-history':
-        return <OrderHistory />;
-      case 'address':
-        return <Address />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Home />;
-    }
-  };
-
-  return (
-    <Layout>
-      {renderBuyerPage()}
-    </Layout>
-  );
+  return children;
 };
+
+const RequireAdmin = ({ children }) => {
+  const { userRole } = useAppContext();
+  if (userRole !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
+const App = () => (
+  <Routes>
+    <Route element={<BuyerShell />}>
+      <Route index element={<Home />} />
+      <Route path="products" element={<Products />} />
+      <Route path="search" element={<Search />} />
+      <Route
+        path="wishlist"
+        element={(
+          <RequireAuth>
+            <Wishlist />
+          </RequireAuth>
+        )}
+      />
+      <Route
+        path="cart"
+        element={(
+          <RequireAuth>
+            <Cart />
+          </RequireAuth>
+        )}
+      />
+      <Route path="product/:productId" element={<ProductDetail />} />
+      <Route
+        path="checkout"
+        element={(
+          <RequireAuth>
+            <Checkout />
+          </RequireAuth>
+        )}
+      />
+      <Route path="order/success" element={<OrderSuccess />} />
+      <Route path="auth" element={<Auth />} />
+      <Route
+        path="profile"
+        element={(
+          <RequireAuth>
+            <Profile />
+          </RequireAuth>
+        )}
+      />
+      <Route
+        path="order/history"
+        element={(
+          <RequireAuth>
+            <OrderHistory />
+          </RequireAuth>
+        )}
+      />
+      <Route
+        path="address"
+        element={(
+          <RequireAuth>
+            <Address />
+          </RequireAuth>
+        )}
+      />
+      <Route
+        path="settings"
+        element={(
+          <RequireAuth>
+            <Settings />
+          </RequireAuth>
+        )}
+      />
+    </Route>
+
+    <Route
+      path="admin"
+      element={(
+        <RequireAdmin>
+          <AdminShell />
+        </RequireAdmin>
+      )}
+    >
+      <Route index element={<Navigate to="dashboard" replace />} />
+      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="orders" element={<OrderManagement />} />
+      <Route path="products" element={<ProductManagement />} />
+      <Route path="customers" element={<CustomerManagement />} />
+      <Route path="promotions" element={<Promotions />} />
+      <Route path="partners" element={<Partners />} />
+    </Route>
+
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+);
 
 export default App;
