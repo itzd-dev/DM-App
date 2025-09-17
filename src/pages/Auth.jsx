@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Auth = () => {
-  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail, navigateTo, isLoggedIn } = useAppContext();
+  const { login, loginWithGoogle, signInWithEmail, signUpWithEmail, navigateTo, isLoggedIn, userRole, setAdminPage } = useAppContext();
   const [authTab, setAuthTab] = useState('login');
   const [loginEmail, setLoginEmail] = useState('pengguna@email.com');
   const [registerName, setRegisterName] = useState('');
@@ -10,20 +10,23 @@ const Auth = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const { error } = await signInWithEmail(loginEmail, (document.getElementById('login-password')?.value || ''));
-    if (!error) navigateTo('profile');
+    await signInWithEmail(loginEmail, (document.getElementById('login-password')?.value || ''));
   }
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    const { error } = await signUpWithEmail(registerEmail, (document.getElementById('register-password')?.value || ''), registerName);
-    if (!error) navigateTo('profile');
+    await signUpWithEmail(registerEmail, (document.getElementById('register-password')?.value || ''), registerName);
   }
 
   // Jika sesi sudah aktif (misal sesaat setelah login), arahkan ke profil
   useEffect(() => {
-    if (isLoggedIn) navigateTo('profile');
-  }, [isLoggedIn]);
+    if (!isLoggedIn) return;
+    if (userRole === 'admin') {
+      setAdminPage?.('dashboard', { replace: true });
+    } else {
+      navigateTo('profile');
+    }
+  }, [isLoggedIn, userRole, navigateTo, setAdminPage]);
 
   return (
     <section id="page-auth" className="page-section p-8">
