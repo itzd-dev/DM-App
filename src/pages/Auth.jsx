@@ -21,8 +21,10 @@ const Auth = () => {
   // Jika sesi sudah aktif (misal sesaat setelah login), arahkan ke profil
   useEffect(() => {
     if (!isLoggedIn) return;
+    if (!userRole) return; // tunggu role terbaca
     if (userRole === 'admin') {
       setAdminPage?.('dashboard', { replace: true });
+      navigateTo('/admin/dashboard');
     } else {
       navigateTo('profile');
     }
