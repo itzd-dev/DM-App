@@ -11,6 +11,7 @@ Frontend (terekspose ke browser via Vite):
 Serverless Functions (server-side, JANGAN pakai awalan `VITE_`):
 - `SUPABASE_URL` — URL Project Supabase
 - `SUPABASE_SERVICE_ROLE_KEY` — service role key Supabase (rahasia, JANGAN pernah dipasang di client)
+- `ALLOWED_ORIGINS` — (opsional) daftar origin yang diizinkan mengakses API, pisahkan dengan koma. Contoh: `https://app.example.com,https://admin.example.com`. Biarkan kosong untuk menerima semua origin (default).
 
 ## Vercel Project Settings → Environment Variables
 Tambahkan ke Environment: Production, Preview, Development sesuai kebutuhan.
@@ -54,4 +55,3 @@ SUPABASE_SERVICE_ROLE_KEY="xxxxxxxx"
 - API 500 di produksi → cek Vercel → Functions Logs → pastikan `SUPABASE_*` terisi benar.
 - Variabel `VITE_*` tidak terbaca di client → perlu redeploy/build ulang karena Vite meng-inline nilai saat build.
 - `vercel env pull` gagal → pastikan sudah login dan project sudah di-link (`vercel link`).
-

@@ -1,26 +1,11 @@
 // dapurmerifa/api/user-state.js
 // Persist per-user cart, wishlist, and profile preferences in Supabase
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_utils/supabaseAdmin.js';
+import { requireUser } from './_utils/auth.js';
+import { applyCors } from './_utils/cors.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const requireUser = async (req, res) => {
-  try {
-    const auth = req.headers['authorization'] || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) return res.status(401).json({ message: 'Unauthorized' });
-    return data.user;
-  } catch (error) {
-    console.error('[user-state] requireUser error', error);
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-};
+const supabase = getSupabaseAdmin();
 
 const normaliseState = (row) => ({
   cart: Array.isArray(row?.cart) ? row.cart : [],
@@ -29,10 +14,8 @@ const normaliseState = (row) => ({
 });
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!applyCors(req, res, { allowMethods: 'GET,PUT,PATCH,OPTIONS' })) return;
+  if (req.method === 'OPTIONS') return res.status(204).end();
 
   const user = await requireUser(req, res);
   if (!user?.id) return;

@@ -1,9 +1,13 @@
 // dapurmerifa/api/health.js
 // Health check endpoint to verify env and DB connectivity
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_utils/supabaseAdmin.js';
+import { applyCors } from './_utils/cors.js';
 
 export default async function handler(req, res) {
+  if (!applyCors(req, res, { allowMethods: 'GET,OPTIONS' })) return;
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const hasEnv = Boolean(url && key);
@@ -12,7 +16,7 @@ export default async function handler(req, res) {
 
   if (hasEnv) {
     try {
-      const supabase = createClient(url, key);
+      const supabase = getSupabaseAdmin();
       const { error, count } = await supabase
         .from('products')
         .select('id', { count: 'exact', head: true });
@@ -20,8 +24,8 @@ export default async function handler(req, res) {
         dbOk = true;
         productsCount = typeof count === 'number' ? count : null;
       }
-    } catch (e) {
-      // leave dbOk as false
+    } catch (error) {
+      console.error('[health] database check failed', error);
     }
   }
 

@@ -1,34 +1,15 @@
 // dapurmerifa/api/promotions.js
 // Serverless API untuk kode promo via Supabase
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_utils/supabaseAdmin.js';
+import { requireAdmin } from './_utils/auth.js';
+import { applyCors } from './_utils/cors.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const requireAdmin = async (req, res) => {
-  try {
-    const auth = req.headers['authorization'] || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) return res.status(401).json({ message: 'Unauthorized' });
-    const { data: prof } = await supabase.from('user_profiles').select('role').eq('id', data.user.id).single();
-    if (prof?.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
-    return data.user;
-  } catch (_e) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-};
+const supabase = getSupabaseAdmin();
 
 export default async function handler(req, res) {
-  // CORS (batasi domain di produksi)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!applyCors(req, res, { allowMethods: 'GET,POST,DELETE,OPTIONS' })) return;
+  if (req.method === 'OPTIONS') return res.status(204).end();
 
   try {
     if (req.method === 'GET') {

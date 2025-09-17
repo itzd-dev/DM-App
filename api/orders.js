@@ -1,12 +1,11 @@
 // dapurmerifa/api/orders.js
 // Serverless API untuk CRUD order via Supabase (server-side)
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_utils/supabaseAdmin.js';
+import { requireAdmin } from './_utils/auth.js';
+import { applyCors } from './_utils/cors.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = getSupabaseAdmin();
 
 const camelToSnake = (obj) => {
   const out = {};
@@ -18,11 +17,8 @@ const camelToSnake = (obj) => {
 };
 
 export default async function handler(req, res) {
-  // CORS (batasi domain di produksi)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!applyCors(req, res, { allowMethods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' })) return;
+  if (req.method === 'OPTIONS') return res.status(204).end();
 
   try {
     if (req.method === 'GET') {
@@ -48,6 +44,8 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT' || req.method === 'PATCH') {
+      const admin = await requireAdmin(req, res);
+      if (!admin) return;
       const body = req.body || {};
       const id = body.id || (req.query && req.query.id);
       if (!id) return res.status(400).json({ message: 'Missing id' });
@@ -169,6 +167,8 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
+      const admin = await requireAdmin(req, res);
+      if (!admin) return;
       const id = (req.query && (req.query.id || (Array.isArray(req.query.id) ? req.query.id[0] : undefined))) || (req.body && req.body.id);
       if (!id) return res.status(400).json({ message: 'Missing id' });
       const { error } = await supabase.from('orders').delete().eq('id', id);
