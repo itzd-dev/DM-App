@@ -118,8 +118,6 @@ export const LegacyAppProvider = ({ children }) => {
 
     // Utilities
     showToast: ui.showToast,
-    theme: ui.theme,
-    toggleTheme: ui.toggleTheme,
     formatRupiah,
   }), [
     auth,

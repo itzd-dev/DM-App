@@ -42,22 +42,22 @@ const Dashboard = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-brand-primary mb-6">Dashboard</h2>
+      <h2 className="text-2xl font-bold text-brand-primary mb-4">Dashboard</h2>
       <button onClick={exportOrdersToCsv} className="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition text-sm mb-6">
         <i className="fas fa-file-excel mr-2"></i> Export Laporan CSV
       </button>
-      
+
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h4 className="text-sm font-medium text-brand-text-light mb-1">Total Pendapatan (Selesai)</h4>
           <p className="text-3xl font-bold text-brand-primary">{formatRupiah(totalRevenue)}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-md md:justify-self-end">
           <h4 className="text-sm font-medium text-brand-text-light mb-1">Total Orderan</h4>
           <p className="text-3xl font-bold text-brand-primary">{totalOrders}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-md md:col-span-2">
           <h4 className="text-sm font-medium text-brand-text-light mb-1">Produk Terlaris</h4>
           <p className="text-2xl font-bold text-brand-primary">{topProducts[0]?.name || 'N/A'}</p>
         </div>
@@ -68,7 +68,7 @@ const Dashboard = () => {
         {/* Sales Chart */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-brand-text mb-4">Grafik Penjualan Harian</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" aspect={1.6}>
             <LineChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" fontSize={12} />
@@ -83,7 +83,7 @@ const Dashboard = () => {
         {/* Top Products Chart */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-brand-text mb-4">5 Produk Terlaris</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" aspect={1.6}>
             <BarChart data={topProducts} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" hide />

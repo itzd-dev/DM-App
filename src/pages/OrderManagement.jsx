@@ -4,7 +4,7 @@ import OrderManagementSkeleton from '../components/OrderManagementSkeleton';
 import Button from '../components/ui/Button';
 
 const Admin = () => {
-  const { logout, orders, updateOrderStatus, formatRupiah, refetchOrders, setAdminPage, showToast, ordersLoading, updatingOrderId } = useAppContext();
+  const { orders, updateOrderStatus, formatRupiah, refetchOrders, setAdminPage, showToast, ordersLoading, updatingOrderId } = useAppContext();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('Semua');
@@ -62,8 +62,8 @@ const Admin = () => {
   return (
     <section id="page-admin-pos" className="page-section p-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-brand-primary dark:text-amber-200">Admin - Manajemen Order</h2>
-        <Button onClick={logout} variant="danger" className="text-sm px-3 py-1.5">Logout</Button>
+        <h2 className="text-xl font-bold text-brand-primary">Manajemen Order</h2>
+        <span className="text-sm text-brand-text-light">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
       </div>
 
       <div className="sticky top-16 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-10 rounded-md border border-brand-subtle p-2 mb-3 overflow-x-auto no-scrollbar">

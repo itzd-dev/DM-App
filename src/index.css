@@ -4,13 +4,13 @@
 
 body {
   font-family: "SF UI Display", sans-serif;
+  background-color: #fbf9f6; /* Warm off-white background */
   font-size: 16px;
-  @apply bg-brand-bg text-brand-text transition-colors duration-300 dark:bg-[#111111] dark:text-slate-100;
 }
 
 @layer components {
   .mobile-container {
-    @apply max-w-[375px] mx-auto bg-white shadow-[0_0_20px_rgba(0,0,0,0.05)] min-h-screen overflow-x-hidden dark:bg-[#18130f];
+    @apply max-w-[375px] mx-auto bg-white shadow-[0_0_20px_rgba(0,0,0,0.05)] min-h-screen overflow-x-hidden;
   }
   .bottom-nav {
     @apply shadow-[0_-2px_10px_rgba(0,0,0,0.1)];

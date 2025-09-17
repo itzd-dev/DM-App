@@ -13,12 +13,12 @@ const AdminBottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1e1e1e] flex justify-around max-w-[375px] mx-auto z-20 border-t border-brand-subtle dark:border-slate-700">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white flex justify-around max-w-[375px] mx-auto z-20 border-t border-brand-subtle md:hidden">
       {navItems.map(item => (
         <button
           key={item.id}
           onClick={() => setAdminPage(item.id)}
-          className={`flex-1 py-3 text-center transition-colors ${adminPage === item.id ? 'text-brand-primary dark:text-amber-300' : 'text-brand-text-light dark:text-slate-300 hover:text-brand-primary dark:hover:text-amber-200'}`}>
+          className={`flex-1 py-3 text-center ${adminPage === item.id ? 'text-brand-primary' : 'text-brand-text-light'}`}>
           <i className={`fas ${item.icon} text-lg`}></i>
           <span className={`block text-xs ${adminPage === item.id ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
         </button>
