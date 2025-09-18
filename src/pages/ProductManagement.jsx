@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import { uploadImage } from '../lib/uploadImage';
+import imageCompression from 'browser-image-compression';
 
 const ProductManagement = () => {
   const {
@@ -87,7 +88,13 @@ const ProductManagement = () => {
 
     try {
       showToast && showToast('Mengunggah gambar…');
-      const uploadedUrl = await uploadImage(file);
+      const compressed = await imageCompression(file, {
+        maxWidthOrHeight: 800,
+        maxSizeMB: 1,
+        useWebWorker: true,
+      });
+
+      const uploadedUrl = await uploadImage(compressed);
       if (!uploadedUrl) throw new Error('URL gambar kosong');
       setFormData((prev) => ({ ...prev, image: uploadedUrl }));
       setPreviewUrl(uploadedUrl);
