@@ -4,6 +4,7 @@ import ProductManagementSkeleton from '../components/ProductManagementSkeleton';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
+import { uploadImage } from '../lib/uploadImage';
 
 const ProductManagement = () => {
   const {
@@ -16,13 +17,15 @@ const ProductManagement = () => {
     toggleProductAvailability,
     updateProductStock,
     isLoading,
+    showToast,
   } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({});
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [stockToAdd, setStockToAdd] = useState(0);
-  const [tempObjectUrl, setTempObjectUrl] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [openActionsId, setOpenActionsId] = useState(null);
   const [isSavingProduct, setIsSavingProduct] = useState(false);
   const [isStockSaving, setIsStockSaving] = useState(false);
@@ -31,8 +34,10 @@ const ProductManagement = () => {
   const openModal = (product = null) => {
     if (product) {
       setFormData(product);
+      setPreviewUrl(product.image || null);
     } else {
       setFormData({ name: '', category: '', price: 0, description: '', image: '', isAvailable: true, currentStock: 0, owner: '' }); // Initialize currentStock for new products
+      setPreviewUrl(null);
     }
     setIsModalOpen(true);
   };
@@ -40,11 +45,11 @@ const ProductManagement = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setFormData({});
-    // Revoke temporary object URL to prevent memory leaks
-    if (tempObjectUrl) {
-      try { URL.revokeObjectURL(tempObjectUrl); } catch {}
-      setTempObjectUrl(null);
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      try { URL.revokeObjectURL(previewUrl); } catch {}
     }
+    setPreviewUrl(null);
+    setUploadingImage(false);
   };
 
   const openStockModal = (productId) => {
@@ -68,16 +73,30 @@ const ProductManagement = () => {
     setStockToAdd(Number(e.target.value));
   };
 
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const newImage = e.target.files[0];
-      // Revoke previous preview if any
-      if (tempObjectUrl) {
-        try { URL.revokeObjectURL(tempObjectUrl); } catch {}
-      }
-      const objUrl = URL.createObjectURL(newImage);
-      setTempObjectUrl(objUrl);
-      setFormData(prev => ({ ...prev, image: objUrl }));
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      try { URL.revokeObjectURL(previewUrl); } catch {}
+    }
+
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+    setUploadingImage(true);
+
+    try {
+      showToast && showToast('Mengunggah gambar…');
+      const uploadedUrl = await uploadImage(file);
+      if (!uploadedUrl) throw new Error('URL gambar kosong');
+      setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+      setPreviewUrl(uploadedUrl);
+      showToast && showToast('Gambar berhasil diunggah');
+    } catch (error) {
+      console.error('[ProductManagement] upload image failed', error);
+      showToast && showToast('Upload gambar gagal, coba lagi');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -120,7 +139,7 @@ const ProductManagement = () => {
         <h2 className="text-lg font-semibold text-brand-primary">Manajemen Produk</h2>
         <Button
           onClick={() => openModal()}
-          disabled={isSavingProduct || isStockSaving}
+          disabled={isSavingProduct || isStockSaving || uploadingImage}
           className="px-3 py-2 text-sm"
         >
           + Tambah Produk
@@ -211,18 +230,21 @@ const ProductManagement = () => {
             <form onSubmit={handleSave} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Left side for Image */}
-                <div className="md:col-span-1">
-                  <label className="text-sm font-medium text-brand-text-light">Gambar Produk (1:1)</label>
-                  <div className="mt-1 w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    {formData.image ? (
-                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xs text-gray-400">Preview Gambar</span>
-                    )}
+                  <div className="md:col-span-1">
+                    <label className="text-sm font-medium text-brand-text-light">Gambar Produk (1:1)</label>
+                    <div className="mt-1 w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      {previewUrl || formData.image ? (
+                        <img src={previewUrl || formData.image} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-gray-400">Preview Gambar</span>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="mt-2 text-sm" />
+                    <p className="text-xs text-gray-500 mt-1">
+                      *Gambar otomatis diunggah ke Supabase Storage saat dipilih.
+                    </p>
+                    {uploadingImage && <p className="text-xs text-brand-primary mt-1">Mengunggah…</p>}
                   </div>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="mt-2 text-sm" />
-                  <p className="text-xs text-gray-500 mt-1">*Gambar tidak tersimpan permanen. Akan hilang jika aplikasi di-refresh.</p>
-                </div>
 
                 {/* Right side for details */}
                 <div className="md:col-span-2 space-y-4">
@@ -259,13 +281,13 @@ const ProductManagement = () => {
                   type="button"
                   onClick={closeModal}
                   variant="secondary"
-                  disabled={isSavingProduct}
+                  disabled={isSavingProduct || uploadingImage}
                 >
                   Batal
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSavingProduct}
+                  disabled={isSavingProduct || uploadingImage}
                 >
                   {isSavingProduct ? 'Menyimpan…' : 'Simpan'}
                 </Button>
