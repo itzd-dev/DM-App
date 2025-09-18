@@ -1,18 +1,20 @@
 import { createContext, useCallback, useContext } from 'react';
+import { notifyToastListeners } from '../../components/ui/ToastStack';
 
 const UiContext = createContext(null);
 
 export const UiProvider = ({ children }) => {
 
-  const showToast = useCallback((message) => {
+  const showToast = useCallback((message, options = {}) => {
     if (!message) return;
-    const existingToast = document.querySelector('.toast-notification');
-    if (existingToast) existingToast.remove();
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification fixed bottom-24 left-1/2 -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg shadow-lg z-50 font-medium text-sm';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+    const id = ++notifyToastListeners._id || (notifyToastListeners._id = 1);
+    notifyToastListeners({
+      id,
+      message,
+      title: options.title,
+      variant: options.variant || 'info',
+      duration: options.duration || 4000,
+    });
   }, []);
 
   return (

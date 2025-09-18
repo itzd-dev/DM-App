@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 // PWA registration (vite-plugin-pwa)
 import { registerSW } from "virtual:pwa-register";
 import { Analytics } from "@vercel/analytics/react";
+import ToastStack from "./components/ui/ToastStack";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById("root")).render(
         <LegacyAppProvider>
           <App />
           <Analytics />
+          <ToastStack />
         </LegacyAppProvider>
       </AppProviders>
     </BrowserRouter>
