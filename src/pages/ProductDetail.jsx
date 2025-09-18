@@ -51,7 +51,7 @@ const ProductDetail = () => {
   return (
     <section id="page-product-detail" className="page-section">
       <img src={image} alt={name} className="w-full h-64 object-cover" />
-      <div className="max-w-[540px] mx-auto px-4 py-6 sm:px-6">
+      <div className="max-w-[480px] mx-auto px-4 py-6 sm:px-6">
         <div className="flex space-x-2 mb-2">
           {tags.map((tag) => {
             const bgColor = tag === 'New' ? 'bg-blue-500' : tag === 'Best Seller' ? 'bg-brand-accent' : 'bg-gray-400';
@@ -122,7 +122,7 @@ const ProductDetail = () => {
       </div>
 
       <div className="sticky bottom-[76px] bg-white border-t border-brand-subtle">
-        <div className="max-w-[540px] mx-auto flex items-center justify-between p-4">
+        <div className="max-w-[480px] mx-auto flex items-center justify-between py-4 px-4 sm:px-6">
           <div className="flex items-center space-x-3">
             <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-8 h-8 bg-brand-subtle rounded-full font-bold text-lg text-brand-primary">-</button>
             <span id="detail-quantity" className="font-semibold text-lg text-brand-text">{quantity}</span>
