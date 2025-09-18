@@ -10,17 +10,21 @@ import { registerSW } from "virtual:pwa-register";
 import { Analytics } from "@vercel/analytics/react";
 import ToastStack from "./components/ui/ToastStack";
 
+import { HelmetProvider } from "react-helmet-async";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
-      <AppProviders>
-        <LegacyAppProvider>
-          <App />
-          <Analytics />
-          <ToastStack />
-        </LegacyAppProvider>
-      </AppProviders>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <AppProviders>
+          <LegacyAppProvider>
+            <App />
+            <Analytics />
+            <ToastStack />
+          </LegacyAppProvider>
+        </AppProviders>
+      </BrowserRouter>
+    </HelmetProvider>
   </StrictMode>
 );
 

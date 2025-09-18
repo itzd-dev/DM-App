@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Halaman Utama -->
+  <url>
+    <loc>https://merifa.my.id/</loc>
+    <priority>1.00</priority>
+  </url>
+
+  <!-- Halaman Produk dan Pencarian -->
+  <url>
+    <loc>https://merifa.my.id/products</loc>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://merifa.my.id/search</loc>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://merifa.my.id/promotions</loc>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- Halaman Proses Checkout -->
+  <url>
+    <loc>https://merifa.my.id/cart</loc>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://merifa.my.id/checkout</loc>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Halaman Pengguna -->
+  <url>
+    <loc>https://merifa.my.id/auth</loc>
+    <priority>0.50</priority>
+  </url>
+  <url>
+    <loc>https://merifa.my.id/profile</loc>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://merifa.my.id/order-history</loc>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://merifa.my.id/wishlist</loc>
+    <priority>0.60</priority>
+  </url>
+
+  <!-- Halaman Lainnya -->
+  <url>
+    <loc>https://merifa.my.id/partners</loc>
+    <priority>0.40</priority>
+  </url>
+
+  <!-- Catatan: Untuk halaman dinamis seperti detail produk, -->
+  <!-- pastikan server atau proses build Anda dapat men-generate URL ini secara otomatis jika memungkinkan. -->
+  <!-- Contoh: -->
+  <!-- 
+  <url>
+    <loc>https://merifa.my.id/product/nama-produk-keren</loc>
+    <priority>0.75</priority>
+  </url>
+  -->
+
+</urlset>

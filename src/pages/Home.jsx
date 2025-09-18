@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAppContext } from '../contexts/AppContext';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
@@ -16,6 +17,10 @@ const Home = () => {
 
   return (
     <section id="page-home" className="page-section p-4">
+      <Helmet>
+        <title>Dapur Merifa - Home Made Premium Frozen Food</title>
+        <meta name="description" content="Selamat datang di Dapur Merifa. Kami menyediakan aneka frozen food premium buatan sendiri dari bahan-bahan berkualitas. Pesan sekarang!" />
+      </Helmet>
       <div
         className="relative rounded-lg overflow-hidden mb-6 text-white h-48 flex flex-col justify-end p-5 text-left"
         style={{
