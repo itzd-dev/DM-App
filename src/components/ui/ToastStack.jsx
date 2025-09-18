@@ -16,20 +16,24 @@ export const subscribeToastListeners = (listener) => {
 
 const variantStyles = {
   success: {
-    container: 'bg-[#EBF8F2] border border-[#38A169]/40',
-    icon: 'fa-check-circle text-[#2F855A]',
+    border: 'border-[#38A169]/60',
+    badge: 'border-[#38A169]',
+    icon: 'fa-check text-[#38A169]',
   },
   error: {
-    container: 'bg-[#FFF5F5] border border-[#E53E3E]/40',
-    icon: 'fa-times-circle text-[#C53030]',
+    border: 'border-[#E53E3E]/60',
+    badge: 'border-[#E53E3E]',
+    icon: 'fa-times text-[#E53E3E]',
   },
   info: {
-    container: 'bg-[#EBF8FF] border border-[#3182CE]/40',
-    icon: 'fa-info-circle text-[#2B6CB0]',
+    border: 'border-[#3182CE]/60',
+    badge: 'border-[#3182CE]',
+    icon: 'fa-info text-[#3182CE]',
   },
   warning: {
-    container: 'bg-[#FFFAF0] border border-[#DD6B20]/40',
-    icon: 'fa-exclamation-triangle text-[#C05621]',
+    border: 'border-[#DD6B20]/60',
+    badge: 'border-[#DD6B20]',
+    icon: 'fa-exclamation text-[#DD6B20]',
   },
 };
 
@@ -62,31 +66,30 @@ const ToastStack = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3">
+    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
       {toasts.map(({ id, title, message, variant = 'info', duration = 4000 }) => {
         const style = variantStyles[variant] || variantStyles.info;
         return (
           <div
             key={id}
-            className={`w-72 max-w-[90vw] rounded-xl shadow-lg px-4 py-3 transition-transform transform translate-y-0 opacity-100 ${style.container}`}
+            className={`w-64 max-w-[85vw] flex items-center gap-3 rounded-lg border ${style.border} bg-white shadow-[0_10px_25px_rgba(0,0,0,0.12)] px-3 py-2 text-brand-text transition-transform`}
           >
-            <div className="flex justify-between items-start">
-              <div className="flex items-start gap-3">
-                <i className={`fas ${style.icon} mt-1 text-lg`} aria-hidden="true"></i>
-                <div>
-                  {title && <h4 className="text-sm font-semibold text-brand-text mb-1">{title}</h4>}
-                  <p className="text-sm text-brand-text-light leading-snug">{message}</p>
-                </div>
-              </div>
-              <button
-                className="text-xs text-brand-text-light hover:text-brand-text"
-                onClick={() => removeToast(id)}
-                aria-label="Tutup notifikasi"
-              >
-                <i className="fas fa-times"></i>
-              </button>
+            <div className={`flex items-center justify-center h-9 w-9 rounded-full border ${style.badge} bg-white shadow-sm`}
+              aria-hidden="true"
+            >
+              <i className={`fas ${style.icon}`}></i>
             </div>
-            <div className="mt-3 h-[3px] rounded-full bg-gradient-to-r from-brand-primary/40 to-transparent"></div>
+            <div className="flex-1">
+              {title && <p className="text-xs font-semibold text-brand-text leading-tight">{title}</p>}
+              <p className="text-xs text-brand-text-light leading-tight mt-0.5">{message}</p>
+            </div>
+            <button
+              className="text-[10px] text-brand-text-light hover:text-brand-text ml-2"
+              onClick={() => removeToast(id)}
+              aria-label="Tutup notifikasi"
+            >
+              <i className="fas fa-times"></i>
+            </button>
           </div>
         );
       })}
