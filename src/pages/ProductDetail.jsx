@@ -51,7 +51,7 @@ const ProductDetail = () => {
   return (
     <section id="page-product-detail" className="page-section">
       <img src={image} alt={name} className="w-full h-64 object-cover" />
-      <div className="p-4">
+      <div className="px-4 py-6 sm:px-6">
         <div className="flex space-x-2 mb-2">
           {tags.map((tag) => {
             const bgColor = tag === 'New' ? 'bg-blue-500' : tag === 'Best Seller' ? 'bg-brand-accent' : 'bg-gray-400';
@@ -81,9 +81,18 @@ const ProductDetail = () => {
         </div>
 
         {allergens && allergens.length > 0 && (
-          <div className="flex items-center text-yellow-600 mt-4 bg-yellow-100 p-3 rounded-md">
-            <i className="fas fa-exclamation-triangle text-sm mr-2"></i>
-            <span className="text-xs font-medium">Informasi Alergen: Produk ini mengandung {allergens.join(", ")}.</span>
+          <div className="mt-5">
+            <h3 className="text-sm font-semibold text-brand-text mb-2">Informasi Alergen</h3>
+            <div className="flex flex-wrap gap-2 bg-yellow-50 border border-yellow-300 rounded-xl p-3 shadow-sm">
+              <i className="fas fa-exclamation-triangle text-yellow-600 text-base" aria-hidden="true"></i>
+              <div className="flex flex-wrap gap-2">
+                {allergens.map((item) => (
+                  <span key={item} className="text-xs font-medium text-yellow-800 bg-white border border-yellow-200 rounded-full px-3 py-1">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
