@@ -19,6 +19,7 @@ const ProductManagement = () => {
     updateProductStock,
     isLoading,
     showToast,
+    getAuthHeaders, // Tambahkan ini
   } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({});
@@ -120,12 +121,19 @@ const ProductManagement = () => {
     // Jika pengguna menambahkan mitra baru
     if (isAddingNewPartner && newPartnerName.trim()) {
       try {
+        const authHeaders = await getAuthHeaders();
         const res = await fetch('/api/partners', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...authHeaders, 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: newPartnerName.trim() }),
         });
-        if (!res.ok) throw new Error('Gagal menambahkan mitra baru');
+        
+        if (!res.ok) {
+          // Coba baca response untuk mendapatkan pesan error spesifik
+          const errorData = await res.json().catch(() => null);
+          throw new Error(errorData?.message || `Gagal menambahkan mitra baru. Status: ${res.status}`);
+        }
+
         const newPartner = await res.json();
         productData.owner = newPartner.name; // Gunakan nama mitra baru
         showToast('Mitra baru berhasil ditambahkan');
