@@ -182,6 +182,21 @@ export const UserProvider = ({ children }) => {
     }
   }, [getAuthHeaders, loggedInUser?.email]);
 
+  const fetchAllCustomerPoints = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch('/api/loyalty?all=true', { headers });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (typeof data === 'object' && data !== null) {
+          setCustomerPoints(data);
+        }
+      }
+    } catch (error) {
+      console.warn('[user] fetchAllCustomerPoints failed', error);
+    }
+  }, [getAuthHeaders]);
+
   useEffect(() => {
     const email = loggedInUser?.email;
     if (!email || !userStateReady) return;
@@ -207,6 +222,7 @@ export const UserProvider = ({ children }) => {
     saveShippingAddress,
     saveUserSettings,
     refetchLoyalty,
+    fetchAllCustomerPoints,
     fetchUserState,
     persistUserState,
     initialCart,
@@ -219,6 +235,7 @@ export const UserProvider = ({ children }) => {
     saveShippingAddress,
     saveUserSettings,
     refetchLoyalty,
+    fetchAllCustomerPoints,
     fetchUserState,
     persistUserState,
     initialCart,

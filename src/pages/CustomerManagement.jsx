@@ -1,9 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const CustomerManagement = () => {
-  const { orders, formatRupiah, customerPoints, customerProfiles, products } = useAppContext();
+  const { orders, formatRupiah, customerPoints, customerProfiles, products, userRole, fetchAllCustomerPoints } = useAppContext();
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  useEffect(() => {
+    if (userRole === 'admin') {
+      fetchAllCustomerPoints();
+    }
+  }, [userRole, fetchAllCustomerPoints]);
 
   const customers = useMemo(() => {
     const customerData = {};

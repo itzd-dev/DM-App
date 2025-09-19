@@ -2,7 +2,7 @@
 // API loyalitas poin: baca/tambah/tukar poin per pengguna (berdasarkan token Supabase)
 
 import { getSupabaseAdmin } from './_utils/supabaseAdmin.js';
-import { requireUser } from './_utils/auth.js';
+import { requireUser, requireAdmin } from './_utils/auth.js';
 import { applyCors } from './_utils/cors.js';
 
 const supabase = getSupabaseAdmin();
@@ -12,6 +12,28 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   try {
+    // Admin route to fetch all points
+    if (req.method === 'GET' && req.query.all === 'true') {
+      const adminUser = await requireAdmin(req, res);
+      if (!adminUser) return; // response already sent
+
+      const { data, error } = await supabase
+        .from('loyalty_points')
+        .select('email, points');
+      
+      if (error) throw error;
+      
+      // Transform the data into a map of { [email]: points }
+      const pointsMap = (data || []).reduce((acc, record) => {
+        if (record.email) {
+          acc[record.email] = record.points;
+        }
+        return acc;
+      }, {});
+
+      return res.status(200).json(pointsMap);
+    }
+
     const user = await requireUser(req, res);
     if (!user?.id) return; // response already sent
     const uid = user.id;
