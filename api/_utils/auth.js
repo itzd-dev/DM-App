@@ -36,29 +36,12 @@ export const requireUser = async (req, res) => {
   }
 };
 
-const fetchUserRole = async (userId) => {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('role')
-    .eq('id', userId)
-    .single();
-  if (error && error.code !== 'PGRST116') throw error;
-  return data?.role || 'buyer';
-};
-
 export const requireAdmin = async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return null;
-  try {
-    const role = await fetchUserRole(user.id);
-    if (role !== 'admin') {
-      res.status(403).json({ message: 'Forbidden' });
-      return null;
-    }
-    return user;
-  } catch (error) {
-    console.error('[auth] requireAdmin error', error);
-    res.status(500).json({ message: 'Failed to verify admin role' });
+  if (!user.app_metadata?.roles?.includes('admin')) {
+    res.status(403).json({ message: 'Forbidden' });
     return null;
   }
+  return user;
 };

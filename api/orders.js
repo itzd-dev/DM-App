@@ -83,28 +83,17 @@ export default async function handler(req, res) {
 
           const email = afterRow?.customer_email || beforeRow?.customer_email;
           if (email && ptsRedeemed > 0) {
-            // Resolve user id via user_profiles, fallback to existing loyalty_points by email
+            // Resolve user id via loyalty_points by email
             let userId = null;
             try {
-              const { data: prof, error: eProf } = await supabase
-                .from('user_profiles')
-                .select('id,email')
+              const { data: lpByEmail, error: eLp } = await supabase
+                .from('loyalty_points')
+                .select('id,email,points')
                 .eq('email', email)
+                .limit(1)
                 .single();
-              if (!eProf && prof?.id) userId = prof.id;
+              if (!eLp && lpByEmail?.id) userId = lpByEmail.id;
             } catch (_) {}
-
-            if (!userId) {
-              try {
-                const { data: lpByEmail, error: eLp } = await supabase
-                  .from('loyalty_points')
-                  .select('id,email,points')
-                  .eq('email', email)
-                  .limit(1)
-                  .single();
-                if (!eLp && lpByEmail?.id) userId = lpByEmail.id;
-              } catch (_) {}
-            }
 
             if (userId) {
               // Ensure points row exists

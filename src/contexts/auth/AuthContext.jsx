@@ -46,27 +46,16 @@ export const AuthProvider = ({ children }) => {
 
     const fetchRole = async (session) => {
       try {
-        const uid = session?.user?.id;
-        if (!uid) {
+        const user = session?.user;
+        if (!user) {
           setUserRole(null);
           return;
         }
-        const { data: prof, error } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('id', uid)
-          .single();
-        if (error && error.code !== 'PGRST116') throw error;
-        if (!prof) {
-          await supabase.from('user_profiles').insert({
-            id: uid,
-            email: session.user.email,
-            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email,
-            role: 'buyer',
-          });
-          setUserRole('buyer');
+        const roles = user.app_metadata?.roles || [];
+        if (roles.includes('admin')) {
+          setUserRole('admin');
         } else {
-          setUserRole(prof.role || 'buyer');
+          setUserRole('buyer');
         }
       } catch (error) {
         console.error('[auth] fetchRole failed', error);

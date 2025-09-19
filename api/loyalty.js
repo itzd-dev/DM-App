@@ -26,7 +26,6 @@ export default async function handler(req, res) {
       
       if (error) throw error;
       
-      // Transform the data into a map of { [email]: points }
       const pointsMap = (data || []).reduce((acc, record) => {
         if (record.email) {
           acc[record.email] = record.points;
@@ -40,7 +39,6 @@ export default async function handler(req, res) {
     const user = await requireUser(req, res);
     if (!user?.id) return; // response already sent
 
-    // Ensure row exists for a given user ID and email
     const ensureRow = async (userId, userEmail) => {
       const { data: row, error } = await supabase
         .from('loyalty_points')
@@ -48,7 +46,7 @@ export default async function handler(req, res) {
         .eq('id', userId)
         .single();
       if (row) return row;
-      if (error && error.code !== 'PGRST116') throw error; // Ignore 'no rows found'
+      if (error && error.code !== 'PGRST116') throw error;
       const { data: created, error: e2 } = await supabase
         .from('loyalty_points')
         .insert({ id: userId, email: userEmail, points: 0 })
@@ -80,19 +78,25 @@ export default async function handler(req, res) {
       if (!['earn', 'redeem'].includes(op)) return res.status(400).json({ message: 'Invalid op' });
       if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ message: 'amount must be > 0' });
 
-      let targetUserId = user.id;
-      let targetUserEmail = user.email;
+      let targetUserId;
+      let targetUserEmail;
 
       const isAdmin = user.app_metadata?.roles?.includes('admin');
 
-      // If admin and email is provided, target that user instead
-      if (isAdmin && body.email && body.email !== user.email) {
+      if (isAdmin) {
+        if (!body.email) {
+          return res.status(400).json({ message: 'Admin must provide customer email in request body.' });
+        }
         const { data: { users: targetUsers }, error: findErr } = await supabase.auth.admin.listUsers({ email: body.email });
         if (findErr || !targetUsers || targetUsers.length === 0) {
-          return res.status(404).json({ message: 'Target user not found.' });
+          return res.status(404).json({ message: 'Target customer not found.' });
         }
         targetUserId = targetUsers[0].id;
         targetUserEmail = targetUsers[0].email;
+      } else {
+        // Non-admin users can only earn/redeem for themselves
+        targetUserId = user.id;
+        targetUserEmail = user.email;
       }
 
       await ensureRow(targetUserId, targetUserEmail);
@@ -103,11 +107,7 @@ export default async function handler(req, res) {
         .eq('id', targetUserId)
         .single();
       
-      if (err && err.code !== 'PGRST116') {
-        // PGRST116 means no row was found, which is fine, we start from 0.
-        // For other errors, we should throw.
-        throw err;
-      }
+      if (err && err.code !== 'PGRST116') throw err;
       const currentPts = current?.points ?? 0;
 
       let next = currentPts;
@@ -126,7 +126,6 @@ export default async function handler(req, res) {
 
       if (e2) throw e2;
 
-      // Write history log
       await supabase.from('loyalty_history').insert({
         user_id: targetUserId,
         email: targetUserEmail,
