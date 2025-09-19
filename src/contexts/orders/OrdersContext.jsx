@@ -82,29 +82,45 @@ export const OrdersProvider = ({ children }) => {
       });
       if (!res.ok) throw new Error('Gagal update status order');
 
+      showToast('Status pesanan diperbarui.');
+
       if (newStatus === 'Selesai' && orderToUpdate) {
+        showToast('Memproses poin loyalitas...', { type: 'info' });
         const pointsEarned = Math.floor(orderToUpdate.total / 10000);
-        if (pointsEarned > 0 && orderToUpdate.customerEmail !== 'guest@example.com') {
-          try {
-            const loyaltyHeaders = await getAuthHeaders();
-            await fetch('/api/loyalty', {
-              method: 'POST',
-              headers: loyaltyHeaders,
-              body: JSON.stringify({
-                op: 'earn',
-                amount: pointsEarned,
-                email: orderToUpdate.customerEmail,
-              }),
-            });
-            await fetchAllCustomerPoints();
-            showToast(`${orderToUpdate.customer} mendapatkan ${pointsEarned} poin.`);
-          } catch (error) {
-            console.warn('[orders] updateOrderStatus loyalty earn failed', error);
-            showToast('Gagal menambahkan poin loyalitas.', { type: 'error' });
-          }
+
+        if (orderToUpdate.customerEmail === 'guest@example.com') {
+          showToast('Pesanan tamu, poin tidak diberikan.', { type: 'info' });
+          return;
         }
-      } else {
-        showToast('Status pesanan diperbarui.');
+        if (pointsEarned <= 0) {
+          showToast(`Total pesanan ${formatRupiah(orderToUpdate.total)}, tidak ada poin yang didapat.`, { type: 'info' });
+          return;
+        }
+
+        try {
+          showToast(`Menambahkan ${pointsEarned} poin ke ${orderToUpdate.customerEmail}...`, { type: 'info' });
+          const loyaltyHeaders = await getAuthHeaders();
+          const loyaltyRes = await fetch('/api/loyalty', {
+            method: 'POST',
+            headers: loyaltyHeaders,
+            body: JSON.stringify({
+              op: 'earn',
+              amount: pointsEarned,
+              email: orderToUpdate.customerEmail,
+            }),
+          });
+
+          if (!loyaltyRes.ok) {
+            const errorBody = await loyaltyRes.text();
+            throw new Error(`API Poin gagal: ${errorBody}`);
+          }
+
+          await fetchAllCustomerPoints();
+          showToast(`${orderToUpdate.customer} berhasil mendapatkan ${pointsEarned} poin!`, { type: 'success' });
+        } catch (error) {
+          console.error('[orders] updateOrderStatus loyalty earn failed', error);
+          showToast(error.message, { type: 'error', duration: 10000 });
+        }
       }
     } catch (error) {
       console.error('[orders] updateOrderStatus failed', error);
@@ -114,12 +130,11 @@ export const OrdersProvider = ({ children }) => {
     } finally {
       setUpdatingOrderId(null);
     }
-  }, [orders, showToast, getAuthHeaders, fetchAllCustomerPoints]);
+  }, [orders, showToast, getAuthHeaders, fetchAllCustomerPoints, formatRupiah]);
 
   const placeOrder = useCallback(async () => {
     if (cart.length === 0) return;
 
-    // Fetch the latest user session directly to ensure data is not stale
     const { data: { user } } = await supabase.auth.getUser();
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
