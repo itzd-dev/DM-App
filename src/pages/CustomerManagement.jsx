@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const CustomerManagement = () => {
-  const { orders, formatRupiah, customerPoints, customerProfiles, products, userRole, fetchAllCustomerPoints, showToast } = useAppContext();
+  const { orders, formatRupiah, customerPoints, customerProfiles, products, userRole, fetchAllCustomerPoints } = useAppContext();
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
@@ -10,12 +10,6 @@ const CustomerManagement = () => {
       fetchAllCustomerPoints();
     }
   }, [userRole, fetchAllCustomerPoints]);
-
-  useEffect(() => {
-    if (Object.keys(customerPoints).length > 0) {
-      showToast('Customer points updated in component', { type: 'success' });
-    }
-  }, [customerPoints, showToast]);
 
   const customers = useMemo(() => {
     const customerData = {};

@@ -188,7 +188,6 @@ export const UserProvider = ({ children }) => {
       const resp = await fetch('/api/loyalty?all=true', { headers });
       if (resp.ok) {
         const data = await resp.json();
-        showToast(`Fetched points: ${JSON.stringify(data)}`, { type: 'info', duration: 10000 });
         if (typeof data === 'object' && data !== null) {
           setCustomerPoints(data);
         }
@@ -196,7 +195,7 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.warn('[user] fetchAllCustomerPoints failed', error);
     }
-  }, [getAuthHeaders, showToast]);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     const email = loggedInUser?.email;
