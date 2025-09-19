@@ -156,19 +156,21 @@ export const OrdersProvider = ({ children }) => {
         const saved = await res.json();
         setOrders((prev) => [saved, ...prev]);
         setLastOrderDetails(saved);
+        navigateTo('order-success');
       } else {
+        const errorText = await res.text();
+        showToast(`Gagal membuat pesanan: ${errorText}`, { type: 'error', duration: 10000 });
         const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
         const newOrder = { id: fallbackId, ...newOrderBase };
         setOrders((prev) => [newOrder, ...prev]);
         setLastOrderDetails(newOrder);
       }
     } catch (error) {
+      showToast(`Gagal membuat pesanan: ${error.message}`, { type: 'error', duration: 10000 });
       const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
       const newOrder = { id: fallbackId, ...newOrderBase };
       setOrders((prev) => [newOrder, ...prev]);
       setLastOrderDetails(newOrder);
-    } finally {
-      navigateTo('order-success');
     }
   }, [
     cart,
@@ -179,6 +181,7 @@ export const OrdersProvider = ({ children }) => {
     getAuthHeaders,
     setAppliedDiscount,
     navigateTo,
+    showToast,
   ]);
 
   const backToHome = useCallback(() => {
