@@ -35,6 +35,9 @@ const whitelistProductFields = (row) => {
 };
 
 export default async function handler(req, res) {
+  if (!supabase) {
+    return res.status(500).json({ message: 'Supabase client is not initialized. Check server environment variables.' });
+  }
   if (!applyCors(req, res, { allowMethods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' })) return;
   if (req.method === 'OPTIONS') return res.status(204).end();
 
