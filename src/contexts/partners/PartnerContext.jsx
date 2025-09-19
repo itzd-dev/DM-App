@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { safeLoad, safeSave } from '../../utils/storage';
 import { useAuth } from '../auth/AuthContext';
 import { useUi } from '../ui/UiContext';
+import { supabase } from '../../lib/supabaseClient';
 
 const PartnerContext = createContext(null);
 
@@ -33,6 +34,20 @@ export const PartnerProvider = ({ children }) => {
 
   useEffect(() => {
     refetchPartners();
+
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('db-partners')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'partners' }, (payload) => {
+        console.log('[partner] realtime change', payload);
+        refetchPartners();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [refetchPartners]);
 
   const addPartner = useCallback(async (partnerData) => {
@@ -46,14 +61,14 @@ export const PartnerProvider = ({ children }) => {
         body: JSON.stringify(partnerData),
       });
       if (!res.ok) throw new Error('Gagal menambah mitra');
-      await refetchPartners();
+      // await refetchPartners(); // No longer needed, realtime will handle it
       showToast('Mitra ditambahkan.');
     } catch (error) {
       console.error('[partner] addPartner failed', error);
       showToast('Gagal menambah mitra.');
       setPartners((prev) => prev.filter((partner) => partner.id !== optimistic.id));
     }
-  }, [getAuthHeaders, refetchPartners, showToast]);
+  }, [getAuthHeaders, showToast]);
 
   const editPartner = useCallback(async (id, partnerData) => {
     const prevSnapshot = partners;
@@ -66,14 +81,14 @@ export const PartnerProvider = ({ children }) => {
         body: JSON.stringify({ id, ...partnerData }),
       });
       if (!res.ok) throw new Error('Gagal memperbarui mitra');
-      await refetchPartners();
+      // await refetchPartners(); // No longer needed, realtime will handle it
       showToast('Mitra diperbarui.');
     } catch (error) {
       console.error('[partner] editPartner failed', error);
       showToast('Gagal memperbarui mitra.');
       setPartners(prevSnapshot);
     }
-  }, [getAuthHeaders, partners, refetchPartners, showToast]);
+  }, [getAuthHeaders, partners, showToast]);
 
   const deletePartner = useCallback(async (id) => {
     const prevSnapshot = partners;

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useUi } from '../ui/UiContext';
+import { supabase } from '../../lib/supabaseClient';
 
 const CatalogContext = createContext(null);
 
@@ -64,6 +65,20 @@ export const CatalogProvider = ({ children }) => {
 
   useEffect(() => {
     refetchProducts();
+
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('db-products')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+        console.log('[catalog] realtime change', payload);
+        refetchProducts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [refetchProducts]);
 
   const addProduct = useCallback(async (productData) => {
@@ -98,26 +113,12 @@ export const CatalogProvider = ({ children }) => {
         const errText = await res.text().catch(() => '');
         throw new Error(errText || 'Gagal menambah produk');
       }
-      try {
-        const saved = await res.json();
-        setProducts((prev) => [normalizeProduct(saved), ...prev]);
-      } catch (error) {
-        await refetchProducts();
-      }
       showToast(`${productData.name} berhasil ditambahkan.`);
     } catch (error) {
       console.error('[catalog] addProduct failed', error);
-      try {
-        const maxId = products.reduce((max, product) => Math.max(max, Number(product.id) || 0), 0);
-        const localProduct = normalizeProduct({ id: maxId + 1, ...payload });
-        setProducts((prev) => [localProduct, ...prev]);
-        showToast(`${productData.name} ditambahkan (lokal).`);
-      } catch (fallbackError) {
-        console.error('[catalog] addProduct fallback failed', fallbackError);
-        showToast('Gagal menambah produk. Cek nilai harga/stok dan API.');
-      }
+      showToast('Gagal menambah produk. Cek nilai harga/stok dan API.');
     }
-  }, [getAuthHeaders, products, refetchProducts, showToast]);
+  }, [getAuthHeaders, showToast]);
 
   const editProduct = useCallback(async (productId, updatedData) => {
     const prevSnapshot = products;
@@ -147,12 +148,6 @@ export const CatalogProvider = ({ children }) => {
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
         throw new Error(errText || 'Gagal memperbarui produk');
-      }
-      try {
-        const saved = await res.json();
-        setProducts((prev) => prev.map((product) => (product.id === productId ? normalizeProduct(saved) : product)));
-      } catch (error) {
-        // keep optimistic if server does not return body
       }
       showToast(`${updatedData.name} berhasil diperbarui.`);
     } catch (error) {
@@ -185,12 +180,6 @@ export const CatalogProvider = ({ children }) => {
         body: JSON.stringify({ id: productId, op: 'add_stock', addedQuantity: add }),
       });
       if (!res.ok) throw new Error('Gagal menambah stok');
-      try {
-        const saved = await res.json();
-        setProducts((prev) => prev.map((product) => (product.id === productId ? normalizeProduct(saved) : product)));
-      } catch (error) {
-        // ignore if server does not return body
-      }
       showToast('Stok produk diperbarui.');
     } catch (error) {
       console.error('[catalog] updateProductStock failed', error);
@@ -226,13 +215,12 @@ export const CatalogProvider = ({ children }) => {
         body: JSON.stringify({ id: productId, isAvailable: nextStatus }),
       });
       if (!res.ok) throw new Error('Gagal mengubah status');
-      await refetchProducts();
       showToast('Status ketersediaan produk diperbarui.');
     } catch (error) {
       console.error('[catalog] toggleProductAvailability failed', error);
       showToast('Gagal memperbarui status produk.');
     }
-  }, [getAuthHeaders, refetchProducts, showToast, products]);
+  }, [getAuthHeaders, showToast, products]);
 
   const adjustInventoryAfterSale = useCallback((cartItems) => {
     setProducts((prevProducts) => prevProducts.map((product) => {

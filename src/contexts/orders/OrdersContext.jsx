@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../cart/CartContext';
 import { useCatalog } from '../catalog/CatalogContext';
@@ -6,6 +6,7 @@ import { useUi } from '../ui/UiContext';
 import { useUserData } from '../user/UserContext';
 import { useNavigation } from '../navigation/NavigationContext';
 import { formatRupiah } from '../../utils/format';
+import { supabase } from '../../lib/supabaseClient';
 
 const OrdersContext = createContext(null);
 
@@ -47,6 +48,24 @@ export const OrdersProvider = ({ children }) => {
     }
   }, []);
 
+  useEffect(() => {
+    refetchOrders();
+
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('db-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+        console.log('[orders] realtime change', payload);
+        refetchOrders();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetchOrders]);
+
   const updateOrderStatus = useCallback(async (orderId, newStatus) => {
     setUpdatingOrderId(orderId);
     const prevSnapshot = orders;
@@ -58,13 +77,6 @@ export const OrdersProvider = ({ children }) => {
         body: JSON.stringify({ id: orderId, status: newStatus }),
       });
       if (!res.ok) throw new Error('Gagal update status order');
-      try {
-        const saved = await res.json();
-        setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, ...saved } : order)));
-      } catch (error) {
-        // ignore JSON parse error, fallback already applied
-      }
-      await refetchOrders();
       showToast('Status pesanan diperbarui.');
     } catch (error) {
       console.error('[orders] updateOrderStatus failed', error);
@@ -74,7 +86,7 @@ export const OrdersProvider = ({ children }) => {
     } finally {
       setUpdatingOrderId(null);
     }
-  }, [orders, refetchOrders, showToast]);
+  }, [orders, showToast]);
 
   const placeOrder = useCallback(() => {
     if (cart.length === 0) return;
