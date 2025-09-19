@@ -25,7 +25,7 @@ export const OrdersProvider = ({ children }) => {
   const { cart, setCart, appliedDiscount, setAppliedDiscount, pointsDiscount, setPointsDiscount } = useCart();
   const { adjustInventoryAfterSale } = useCatalog();
   const { showToast } = useUi();
-  const { setCustomerPoints, refetchLoyalty } = useUserData();
+  const { setCustomerPoints, refetchLoyalty, fetchAllCustomerPoints } = useUserData();
   const { navigateTo } = useNavigation();
 
   const [orders, setOrders] = useState([]);
@@ -69,6 +69,8 @@ export const OrdersProvider = ({ children }) => {
   const updateOrderStatus = useCallback(async (orderId, newStatus) => {
     setUpdatingOrderId(orderId);
     const prevSnapshot = orders;
+    const orderToUpdate = orders.find(o => o.id === orderId);
+
     setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)));
     try {
       const res = await fetch('/api/orders', {
@@ -77,16 +79,40 @@ export const OrdersProvider = ({ children }) => {
         body: JSON.stringify({ id: orderId, status: newStatus }),
       });
       if (!res.ok) throw new Error('Gagal update status order');
-      showToast('Status pesanan diperbarui.');
+
+      if (newStatus === 'Selesai' && orderToUpdate) {
+        const pointsEarned = Math.floor(orderToUpdate.total / 10000);
+        if (pointsEarned > 0 && orderToUpdate.customerEmail !== 'guest@example.com') {
+          try {
+            const headers = await getAuthHeaders();
+            await fetch('/api/loyalty', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                op: 'earn',
+                amount: pointsEarned,
+                email: orderToUpdate.customerEmail,
+              }),
+            });
+            await fetchAllCustomerPoints();
+            showToast(`${orderToUpdate.customer} mendapatkan ${pointsEarned} poin.`);
+          } catch (error) {
+            console.warn('[orders] updateOrderStatus loyalty earn failed', error);
+            showToast('Gagal menambahkan poin loyalitas.', { type: 'error' });
+          }
+        }
+      } else {
+        showToast('Status pesanan diperbarui.');
+      }
     } catch (error) {
       console.error('[orders] updateOrderStatus failed', error);
       setOrders(prevSnapshot);
-      showToast('Gagal update status. Perubahan dibatalkan.');
+      showToast('Gagal update status. Perubahan dibatalkan.', { type: 'error' });
       throw error;
     } finally {
       setUpdatingOrderId(null);
     }
-  }, [orders, showToast]);
+  }, [orders, showToast, getAuthHeaders, fetchAllCustomerPoints]);
 
   const placeOrder = useCallback(() => {
     if (cart.length === 0) return;
@@ -116,30 +142,6 @@ export const OrdersProvider = ({ children }) => {
 
     setAppliedDiscount(null);
     adjustInventoryAfterSale(cart);
-
-    if (loggedInUser && loggedInUser.email) {
-      const pointsEarned = Math.floor(total / 10000);
-      if (pointsEarned > 0) {
-        (async () => {
-          try {
-            const headers = await getAuthHeaders();
-            await fetch('/api/loyalty', { method: 'POST', headers, body: JSON.stringify({ op: 'earn', amount: pointsEarned }) });
-            try {
-              await refetchLoyalty();
-            } catch (error) {
-              console.warn('[orders] placeOrder refetchLoyalty failed', error);
-            }
-          } catch (error) {
-            console.warn('[orders] placeOrder loyalty earn failed', error);
-          }
-        })();
-        setCustomerPoints((prev) => ({
-          ...prev,
-          [loggedInUser.email]: (prev[loggedInUser.email] || 0) + pointsEarned,
-        }));
-        showToast(`Anda mendapatkan ${pointsEarned} poin!`);
-      }
-    }
 
     (async () => {
       try {
