@@ -36,7 +36,8 @@ export const OrdersProvider = ({ children }) => {
   const refetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const resp = await fetch('/api/orders');
+      const headers = await getAuthHeaders();
+      const resp = await fetch('/api/orders', { headers });
       if (resp.ok) {
         const list = await resp.json();
         if (Array.isArray(list)) setOrders(list);
@@ -46,7 +47,7 @@ export const OrdersProvider = ({ children }) => {
     } finally {
       setOrdersLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     refetchOrders();
@@ -73,9 +74,10 @@ export const OrdersProvider = ({ children }) => {
 
     setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)));
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch('/api/orders', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ id: orderId, status: newStatus }),
       });
       if (!res.ok) throw new Error('Gagal update status order');
@@ -84,10 +86,10 @@ export const OrdersProvider = ({ children }) => {
         const pointsEarned = Math.floor(orderToUpdate.total / 10000);
         if (pointsEarned > 0 && orderToUpdate.customerEmail !== 'guest@example.com') {
           try {
-            const headers = await getAuthHeaders();
+            const loyaltyHeaders = await getAuthHeaders();
             await fetch('/api/loyalty', {
               method: 'POST',
-              headers,
+              headers: loyaltyHeaders,
               body: JSON.stringify({
                 op: 'earn',
                 amount: pointsEarned,
@@ -114,7 +116,7 @@ export const OrdersProvider = ({ children }) => {
     }
   }, [orders, showToast, getAuthHeaders, fetchAllCustomerPoints]);
 
-  const placeOrder = useCallback(() => {
+  const placeOrder = useCallback(async () => {
     if (cart.length === 0) return;
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -143,32 +145,31 @@ export const OrdersProvider = ({ children }) => {
     setAppliedDiscount(null);
     adjustInventoryAfterSale(cart);
 
-    (async () => {
-      try {
-        const res = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newOrderBase),
-        });
-        if (res.ok) {
-          const saved = await res.json();
-          setOrders((prev) => [saved, ...prev]);
-          setLastOrderDetails(saved);
-        } else {
-          const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
-          const newOrder = { id: fallbackId, ...newOrderBase };
-          setOrders((prev) => [newOrder, ...prev]);
-          setLastOrderDetails(newOrder);
-        }
-      } catch (error) {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(newOrderBase),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setOrders((prev) => [saved, ...prev]);
+        setLastOrderDetails(saved);
+      } else {
         const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
         const newOrder = { id: fallbackId, ...newOrderBase };
         setOrders((prev) => [newOrder, ...prev]);
         setLastOrderDetails(newOrder);
-      } finally {
-        navigateTo('order-success');
       }
-    })();
+    } catch (error) {
+      const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
+      const newOrder = { id: fallbackId, ...newOrderBase };
+      setOrders((prev) => [newOrder, ...prev]);
+      setLastOrderDetails(newOrder);
+    } finally {
+      navigateTo('order-success');
+    }
   }, [
     cart,
     appliedDiscount,
@@ -176,9 +177,6 @@ export const OrdersProvider = ({ children }) => {
     loggedInUser,
     adjustInventoryAfterSale,
     getAuthHeaders,
-    refetchLoyalty,
-    setCustomerPoints,
-    showToast,
     setAppliedDiscount,
     navigateTo,
   ]);
