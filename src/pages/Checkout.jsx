@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 
 const Checkout = () => {
-  const { cart, formatRupiah, placeOrder, appliedDiscount, pointsDiscount, resetPointsDiscount } = useAppContext();
+  const { cart, formatRupiah, placeOrder, appliedDiscount, pointsDiscount, resetPointsDiscount, loggedInUser, authReady, navigateTo } = useAppContext();
   const [paymentMethod, setPaymentMethod] = useState('qris');
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -23,11 +23,25 @@ const Checkout = () => {
     <section id="page-checkout" className="page-section p-4">
       <div className="mb-4">
         <h3 className="text-md font-semibold text-brand-primary mb-2">Alamat Pengiriman</h3>
-        <div className="p-4 bg-brand-bg rounded-lg border border-brand-subtle text-sm">
-          <p className="font-bold text-brand-text">Nama Pengguna</p>
-          <p className="text-brand-text-light">Jl. Merdeka No. 123, Kota Bahagia, 12345</p>
-          <a href="#" className="text-brand-accent font-semibold text-xs mt-1 inline-block">Ganti Alamat</a>
-        </div>
+        {authReady && loggedInUser ? (
+          <div className="p-4 bg-brand-bg rounded-lg border border-brand-subtle text-sm">
+            <p className="font-bold text-brand-text">{loggedInUser.name}</p>
+            <p className="text-brand-text-light">{loggedInUser.email}</p>
+            {/* TODO: Implement address management */}
+            <p className="text-brand-text-light mt-2">Jl. Merdeka No. 123, Kota Bahagia, 12345</p>
+            <a href="#" className="text-brand-accent font-semibold text-xs mt-1 inline-block">Ganti Alamat</a>
+          </div>
+        ) : (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+            <p className="font-bold text-yellow-800">Anda Belum Login</p>
+            <p className="text-yellow-700 mt-1">
+              Masuk atau daftar untuk mendapatkan poin loyalitas dan kemudahan dalam bertransaksi.
+            </p>
+            <button onClick={() => navigateTo('auth')} className="mt-3 bg-brand-accent text-white font-bold py-2 px-4 rounded-lg text-xs">
+              Login atau Daftar
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mb-4">
