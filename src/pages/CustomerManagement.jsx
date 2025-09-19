@@ -1,9 +1,47 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
+import { useAuth } from '../contexts/auth/AuthContext';
+import { useUi } from '../contexts/ui/UiContext';
 
 const CustomerManagement = () => {
   const { orders, formatRupiah, customerPoints, customerProfiles, products, userRole, fetchAllCustomerPoints } = useAppContext();
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  const { getAuthHeaders } = useAuth();
+  const { showToast } = useUi();
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false); // State untuk loading button
+
+  const handleSetRole = async (customerEmail, newRole) => {
+    setIsUpdatingRole(true);
+    try {
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch('/api/setAdminRole', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({ email: customerEmail, role: newRole }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(`Error: ${data.message}`, 'error');
+        console.error('Error setting role:', data.message);
+        return;
+      }
+
+      showToast(`Peran ${customerEmail} berhasil diubah menjadi ${newRole}.`, 'success');
+      // Anda mungkin ingin me-refresh data pelanggan di sini jika diperlukan
+      // fetchAllCustomerPoints(); // Jika ini juga me-refresh peran
+    } catch (error) {
+      showToast('Terjadi kesalahan tak terduga saat mengubah peran.', 'error');
+      console.error('Network or unexpected error:', error);
+    } finally {
+      setIsUpdatingRole(false);
+    }
+  };
 
   useEffect(() => {
     if (userRole === 'admin') {
@@ -54,6 +92,29 @@ const CustomerManagement = () => {
           <h3 className="text-lg font-semibold text-brand-text mb-2">Poin Loyalitas</h3>
           <p className="text-2xl font-bold text-brand-primary">{getCustomerPoints(selectedCustomer.email)} Poin</p>
         </div>
+
+        {/* Role Management */}
+        {userRole === 'admin' && ( // Hanya tampilkan jika pengguna saat ini adalah admin
+          <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+            <h3 className="text-lg font-semibold text-brand-text mb-2">Manajemen Peran</h3>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleSetRole(selectedCustomer.email, 'admin')}
+                disabled={isUpdatingRole}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              >
+                {isUpdatingRole ? 'Memperbarui...' : 'Jadikan Admin'}
+              </button>
+              <button
+                onClick={() => handleSetRole(selectedCustomer.email, 'buyer')}
+                disabled={isUpdatingRole}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 disabled:opacity-50"
+              >
+                {isUpdatingRole ? 'Memperbarui...' : 'Jadikan Pembeli Biasa'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Favorite Products */}
         {favoriteProducts.length > 0 && (
