@@ -45,13 +45,13 @@ export default async function handler(req, res) {
       const { data: row, error } = await supabase
         .from('loyalty_points')
         .select('points')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
       if (row) return row;
       if (error && error.code !== 'PGRST116') throw error; // Ignore 'no rows found'
       const { data: created, error: e2 } = await supabase
         .from('loyalty_points')
-        .insert({ user_id: userId, email: userEmail, points: 0 })
+        .insert({ id: userId, email: userEmail, points: 0 })
         .select('points')
         .single();
       if (e2) throw e2;
@@ -100,10 +100,14 @@ export default async function handler(req, res) {
       const { data: current, error: err } = await supabase
         .from('loyalty_points')
         .select('points')
-        .eq('user_id', targetUserId)
+        .eq('id', targetUserId)
         .single();
       
-      if (err) throw err;
+      if (err && err.code !== 'PGRST116') {
+        // PGRST116 means no row was found, which is fine, we start from 0.
+        // For other errors, we should throw.
+        throw err;
+      }
       const currentPts = current?.points ?? 0;
 
       let next = currentPts;
@@ -116,7 +120,7 @@ export default async function handler(req, res) {
       const { data: updated, error: e2 } = await supabase
         .from('loyalty_points')
         .update({ points: next, email: targetUserEmail })
-        .eq('user_id', targetUserId)
+        .eq('id', targetUserId)
         .select('points')
         .single();
 

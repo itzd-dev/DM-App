@@ -5,7 +5,7 @@ import { useCatalog } from '../catalog/CatalogContext';
 import { useUi } from '../ui/UiContext';
 import { useUserData } from '../user/UserContext';
 import { useNavigation } from '../navigation/NavigationContext';
-import { formatRupiah } from '../../utils/format';
+import { formatRupiah, snakeToCamel } from '../../utils/format';
 import { supabase } from '../../lib/supabaseClient';
 
 const OrdersContext = createContext(null);
@@ -40,7 +40,9 @@ export const OrdersProvider = ({ children }) => {
       const resp = await fetch('/api/orders', { headers });
       if (resp.ok) {
         const list = await resp.json();
-        if (Array.isArray(list)) setOrders(list);
+        if (Array.isArray(list)) {
+          setOrders(snakeToCamel(list));
+        }
       }
     } catch (error) {
       console.warn('[orders] refetchOrders failed', error);
@@ -172,8 +174,8 @@ export const OrdersProvider = ({ children }) => {
       });
       if (res.ok) {
         const saved = await res.json();
-        setOrders((prev) => [saved, ...prev]);
-        setLastOrderDetails(saved);
+        setOrders((prev) => [snakeToCamel(saved), ...prev]);
+        setLastOrderDetails(snakeToCamel(saved));
         navigateTo('order-success');
       } else {
         const errorText = await res.text();
