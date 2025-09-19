@@ -110,6 +110,7 @@ export const LegacyAppProvider = ({ children }) => {
     saveShippingAddress: userData.saveShippingAddress,
     saveUserSettings: userData.saveUserSettings,
     refetchLoyalty: userData.refetchLoyalty,
+    fetchAllCustomerPoints: userData.fetchAllCustomerPoints,
     fetchUserState: userData.fetchUserState,
     persistUserState: userData.persistUserState,
     initialCart: userData.initialCart,

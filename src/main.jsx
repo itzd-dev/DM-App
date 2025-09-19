@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 // PWA registration (vite-plugin-pwa)
 import { registerSW } from "virtual:pwa-register";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import ToastStack from "./components/ui/ToastStack";
 
 import { HelmetProvider } from "react-helmet-async";
@@ -20,6 +21,7 @@ createRoot(document.getElementById("root")).render(
           <LegacyAppProvider>
             <App />
             <Analytics />
+            <SpeedInsights />
             <ToastStack />
           </LegacyAppProvider>
         </AppProviders>
