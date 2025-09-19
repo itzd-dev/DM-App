@@ -119,6 +119,9 @@ export const OrdersProvider = ({ children }) => {
   const placeOrder = useCallback(async () => {
     if (cart.length === 0) return;
 
+    // Fetch the latest user session directly to ensure data is not stale
+    const { data: { user } } = await supabase.auth.getUser();
+
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = 10000;
     let total = subtotal + shipping;
@@ -131,8 +134,8 @@ export const OrdersProvider = ({ children }) => {
     const pointsRedeemed = Math.floor(pointsUsedAmount / 100);
 
     const newOrderBase = {
-      customer: loggedInUser ? loggedInUser.name : 'Pembeli Baru',
-      customerEmail: loggedInUser ? loggedInUser.email : 'guest@example.com',
+      customer: user ? (user.user_metadata?.full_name || user.email) : 'Pembeli Baru',
+      customerEmail: user ? user.email : 'guest@example.com',
       items: [...cart],
       total: total > 0 ? total : 0,
       status: 'Menunggu Pembayaran',
@@ -160,23 +163,14 @@ export const OrdersProvider = ({ children }) => {
       } else {
         const errorText = await res.text();
         showToast(`Gagal membuat pesanan: ${errorText}`, { type: 'error', duration: 10000 });
-        const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
-        const newOrder = { id: fallbackId, ...newOrderBase };
-        setOrders((prev) => [newOrder, ...prev]);
-        setLastOrderDetails(newOrder);
       }
     } catch (error) {
       showToast(`Gagal membuat pesanan: ${error.message}`, { type: 'error', duration: 10000 });
-      const fallbackId = `DM-${Date.now().toString().slice(-5).padStart(5, '0')}`;
-      const newOrder = { id: fallbackId, ...newOrderBase };
-      setOrders((prev) => [newOrder, ...prev]);
-      setLastOrderDetails(newOrder);
     }
   }, [
     cart,
     appliedDiscount,
     pointsDiscount,
-    loggedInUser,
     adjustInventoryAfterSale,
     getAuthHeaders,
     setAppliedDiscount,
