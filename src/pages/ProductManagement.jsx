@@ -30,9 +30,13 @@ const ProductManagement = () => {
   const [openActionsId, setOpenActionsId] = useState(null);
   const [isSavingProduct, setIsSavingProduct] = useState(false);
   const [isStockSaving, setIsStockSaving] = useState(false);
+  const [isAddingNewPartner, setIsAddingNewPartner] = useState(false);
+  const [newPartnerName, setNewPartnerName] = useState('');
   const touchStoreRef = useRef({});
 
   const openModal = (product = null) => {
+    setIsAddingNewPartner(false);
+    setNewPartnerName('');
     if (product) {
       setFormData(product);
       setPreviewUrl(product.image || null);
@@ -110,11 +114,34 @@ const ProductManagement = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSavingProduct(true);
+
+    let productData = { ...formData };
+
+    // Jika pengguna menambahkan mitra baru
+    if (isAddingNewPartner && newPartnerName.trim()) {
+      try {
+        const res = await fetch('/api/partners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newPartnerName.trim() }),
+        });
+        if (!res.ok) throw new Error('Gagal menambahkan mitra baru');
+        const newPartner = await res.json();
+        productData.owner = newPartner.name; // Gunakan nama mitra baru
+        showToast('Mitra baru berhasil ditambahkan');
+      } catch (error) {
+        console.error('Error adding new partner:', error);
+        showToast(error.message);
+        setIsSavingProduct(false);
+        return;
+      }
+    }
+
     try {
-      if (formData.id) {
-        await editProduct(formData.id, formData);
+      if (productData.id) {
+        await editProduct(productData.id, productData);
       } else {
-        await addProduct(formData);
+        await addProduct(productData);
       }
       closeModal();
     } finally {
@@ -275,7 +302,28 @@ const ProductManagement = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-brand-text-light">Pemilik Produk (Mitra)</label>
-                    <PartnerSelect value={formData.owner || ''} onChange={(v) => setFormData(prev => ({ ...prev, owner: v }))} partnersLocal={partners} />
+                    {isAddingNewPartner ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          type="text"
+                          placeholder="Nama Mitra Baru"
+                          value={newPartnerName}
+                          onChange={(e) => setNewPartnerName(e.target.value)}
+                          className="flex-grow"
+                        />
+                        <Button type="button" onClick={() => setIsAddingNewPartner(false)} variant="secondary" className="h-9 px-3 text-xs">Batal</Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1">
+                        <PartnerSelect
+                          value={formData.owner || ''}
+                          onChange={(v) => setFormData(prev => ({ ...prev, owner: v }))}
+                          partnersLocal={partners}
+                          className="flex-grow"
+                        />
+                        <Button type="button" onClick={() => setIsAddingNewPartner(true)} variant="outline" className="h-9 px-3 text-xs">Baru</Button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-medium text-brand-text-light">Deskripsi</label>
@@ -364,7 +412,7 @@ const CategorySelect = ({ value, onChange, products }) => {
 };
 
 // Helper component: partner dropdown fetched from API (fallback ke local partners)
-const PartnerSelect = ({ value, onChange, partnersLocal = [] }) => {
+const PartnerSelect = ({ value, onChange, partnersLocal = [], className }) => {
   const [options, setOptions] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -393,14 +441,14 @@ const PartnerSelect = ({ value, onChange, partnersLocal = [] }) => {
   }, [partnersLocal]);
 
   if (loading) {
-    return <div className="mt-1 text-xs text-brand-text-light">Memuat mitra…</div>;
+    return <div className={`mt-1 text-xs text-brand-text-light ${className}`}>Memuat mitra…</div>;
   }
 
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg bg-white"
+      className={`w-full mt-1 px-4 py-2 border border-brand-subtle rounded-lg bg-white ${className}`}
     >
       <option value="">Pilih mitra (opsional)</option>
       {options.map((name) => (
