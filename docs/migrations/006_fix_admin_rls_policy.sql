@@ -14,14 +14,22 @@ SET search_path = public
 AS $$
 DECLARE
   user_role text;
+  roles_array text[];
 BEGIN
   -- Get role from auth.users app_metadata
   SELECT COALESCE(
     (raw_app_meta_data->>'roles')::text[],
     ARRAY[]::text[]
-  )[1] INTO user_role
+  ) INTO roles_array
   FROM auth.users
   WHERE id = user_id;
+
+  -- Get first role from array
+  IF array_length(roles_array, 1) > 0 THEN
+    user_role := roles_array[1];
+  ELSE
+    user_role := NULL;
+  END IF;
 
   RETURN user_role;
 END;
