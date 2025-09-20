@@ -25,11 +25,17 @@ export default async function handler(req, res) {
 
       // Use admin client to bypass RLS policies
       const adminSupabase = getSupabaseAdmin();
+      console.log("[API] Fetching all loyalty points for admin...");
       const { data, error } = await adminSupabase
         .from("loyalty_points")
         .select("email, points");
 
-      if (error) throw error;
+      if (error) {
+        console.error("[API] Error fetching loyalty points:", error);
+        throw error;
+      }
+
+      console.log("[API] Loyalty points data:", data);
 
       const pointsMap = (data || []).reduce((acc, record) => {
         if (record.email) {
