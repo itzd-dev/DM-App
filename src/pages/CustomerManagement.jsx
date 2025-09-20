@@ -159,7 +159,7 @@ const CustomerManagement = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Memperbarui...
+                    Updating...
                   </div>
                 ) : (
                   <div className="flex items-center justify-center">
@@ -176,7 +176,7 @@ const CustomerManagement = () => {
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       ></path>
                     </svg>
-                    Jadikan Admin
+                    Admin
                   </div>
                 )}
               </button>
@@ -207,7 +207,7 @@ const CustomerManagement = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Memperbarui...
+                    Updating...
                   </div>
                 ) : (
                   <div className="flex items-center justify-center">
@@ -224,7 +224,7 @@ const CustomerManagement = () => {
                         d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                       ></path>
                     </svg>
-                    Jadikan Pembeli Biasa
+                    Buyer
                   </div>
                 )}
               </button>
