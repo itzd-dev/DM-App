@@ -27,3 +27,7 @@ dist-ssr
 # Abaikan folder scripts
 scripts/
 
+# Environment variables
+.env.local
+
+.env.local

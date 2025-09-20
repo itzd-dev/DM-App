@@ -21,13 +21,28 @@ export default async function handler(req, res) {
     if (!adminUser) return; // response already sent
 
     if (req.method === "POST") {
-      const { userId, role } = req.body;
+      const { email, role } = req.body;
 
-      if (!userId || !role) {
+      if (!email || !role) {
         return res
           .status(400)
-          .json({ message: "userId and role are required." });
+          .json({ message: "email and role are required." });
       }
+
+      // First, find user by email
+      const { data: users, error: listError } =
+        await supabase.auth.admin.listUsers();
+      if (listError) {
+        console.error("Error listing users:", listError);
+        return res.status(500).json({ message: "Failed to fetch users." });
+      }
+
+      const user = users.users.find((u) => u.email === email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      const userId = user.id;
 
       // Fetch current user metadata to merge roles
       const { data: userResponse, error: fetchError } =
@@ -67,7 +82,7 @@ export default async function handler(req, res) {
       }
 
       return res.status(200).json({
-        message: `User ${userId} role updated to ${newRoles.join(", ")}`,
+        message: `User ${email} role updated to ${newRoles.join(", ")}`,
         user: data.user,
       });
     }
