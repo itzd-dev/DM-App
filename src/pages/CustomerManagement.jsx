@@ -135,7 +135,7 @@ const CustomerManagement = () => {
               <button
                 onClick={() => handleSetRole(selectedCustomer.email, "admin")}
                 disabled={isUpdatingRole}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-brand-primary to-brand-primary-dark text-white rounded-lg hover:from-brand-primary-dark hover:to-brand-primary font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                className="flex-1 px-4 py-3 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               >
                 {isUpdatingRole ? (
                   <div className="flex items-center justify-center">
